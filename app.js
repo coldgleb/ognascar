@@ -77,11 +77,16 @@ function parse({ results, points, charters, drivers, stages, penalties }) {
     if (race && r[5] && n) race.penalties.push({ who: resolve(r[5]), victim: resolve(r[6]), n, note: (r[8] || '').trim() });
   }
 
-  // Чартеры: колонки с датой = сезоны, колонка без заголовка с отметками = следующий сезон
-  const head = charters[0] || [];
-  const cols = head.map((h, i) => i >= 4 && (h.trim() ? h.trim() : charters.slice(1).some(r => isTrue(r[i])) ? NEXT : null));
-  const entries = charters.slice(1).filter(r => r[2]).map(r => ({
-    maker: r[0].trim(), team: r[1].trim(), num: r[2].trim(), driver: resolve(r[3]),
+  // Чартеры: колонки ищутся по заголовкам (вставка новых столбцов ничего не ломает).
+  // После служебных колонок: с датой = сезоны, без заголовка, но с отметками = следующий сезон
+  const head = (charters[0] || []).map(h => h.trim());
+  const at = (re, def) => { const i = head.findIndex(h => re.test(h)); return i >= 0 ? i : def; };
+  const cMaker = at(/^постав/i, 0), cTeam = at(/^команд/i, 1), cFull = at(/^фулл|^full/i, -1), cNum = at(/^№$/, 2), cDrv = at(/^гонщ/i, 3);
+  const first = Math.max(cMaker, cTeam, cFull, cNum, cDrv) + 1;
+  const cols = head.map((h, i) => i >= first && (h ? h : charters.slice(1).some(r => isTrue(r[i])) ? NEXT : null));
+  const entries = charters.slice(1).filter(r => r[cNum]?.trim()).map(r => ({
+    maker: r[cMaker].trim(), team: r[cTeam].trim(), num: r[cNum].trim(), driver: resolve(r[cDrv]),
+    full: cFull >= 0 && isTrue(r[cFull]), // фулл-тайм: на машину выдан чартер
     on: Object.fromEntries(cols.map((c, i) => c && [c, isTrue(r[i])]).filter(Boolean)),
   }));
   const charterDates = [...new Set(cols.filter(c => c && c !== NEXT))].sort((a, b) => dateKey(a) - dateKey(b));
@@ -215,6 +220,7 @@ const carTag = e => e ? `<span class="car" style="--c:${teamStyle(e.team).color}
 const chOf = (who, date) => DATA.entries.find(e => e.driver === who && e.on[date]) || null;
 const lastCar = who => chOf(who, DATA.lastDate) || [...DATA.entries].reverse().find(e => e.driver === who && Object.values(e.on).some(Boolean)) || null;
 const penText = p => `${nm(p.who)} −${p.n} ${plural(p.n, 'позиция', 'позиции', 'позиций')}${p.victim ? ` в пользу ${nm(p.victim)}` : ''}${p.note ? ` — ${p.note}` : ''}`;
+const ftBadge = e => e?.full ? '<i class="ftb" title="Фулл-тайм: чартер выдан">FT</i>' : '';
 const posCls = p => p === 1 ? 'c1' : p === 2 ? 'c2' : p === 3 ? 'c3' : p <= 5 ? 'c45' : 'c6';
 const medal = rank => rank <= 3 ? ` p${rank}` : '';
 const seasonOf = () => DATA.seasons.find(s => s.key === cur) || null;
@@ -620,7 +626,7 @@ function openTeam(name) {
     <h3>Машины</h3>
     <div class="cars">${nums.map(n => {
       const s = statsOf(scopeRows(t.rows.filter(r => r.ch.num === n)));
-      return `<div class="carcard" style="--c:${t.color}"><a href="#" class="carnum" data-car="${esc(n)}">#${esc(n)}</a>
+      return `<div class="carcard" style="--c:${t.color}"><a href="#" class="carnum" data-car="${esc(n)}">#${esc(n)}${ftBadge(t.entries.find(x => x.num === n && x.full))}</a>
         <div class="mini-tl">${cols.map(c => { const e = t.entries.find(x => x.num === n && x.on[c]); const d = e?.driver && rank[c]?.[e.driver];
           return `<span class="mt${c === cur ? ' sel' : ''}${e?.driver ? '' : ' empty'}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}${e?.driver ? ` data-pilot="${esc(e.driver)}"` : ''} ${tipAttr([c === NEXT ? 'След. сезон' : `Сезон ${seasons.find(x => x.date === c)?.n ?? ''} · ${c}`, e?.driver ? nm(e.driver) : 'свободен', d && `P${d.rank} · ${d.pts} очк.`])}><small>${c === NEXT ? 'след.' : 'С' + (seasons.find(x => x.date === c)?.n ?? '')}</small> ${e?.driver ? esc(nm(e.driver)) : '—'}</span>`; }).join('')}</div>
         <div class="carbest">${s.best ? `Лучший финиш: <b>P${s.best.pos}</b> — ${plink(s.best.who)}, ${esc(raceName(s.best.race))}` : '<span class="muted">Нет стартов</span>'}</div></div>`;
@@ -699,16 +705,16 @@ function viewCharters() {
   const cls = c => cur === 'all' ? '' : c === cur ? 'sel' : 'dim';
   return `<section class="first">
     <h2>Чартеры</h2>
-    <label class="check"><input type="checkbox" id="hide-empty" ${hideEmpty ? 'checked' : ''}> Скрыть номера без пилотов</label>
+    <div class="head-row"><label class="check"><input type="checkbox" id="hide-empty" ${hideEmpty ? 'checked' : ''}> Скрыть номера без пилотов</label><span class="legend-row" style="margin:0 0 12px"><span><i class="ftb" title="Фулл-тайм: чартер выдан">FT</i> фулл-тайм — на машину выдан чартер</span></span></div>
     <div class="card scroll"><table class="cm">
       <thead><tr><th>№</th>${cols.map(c => `<th class="${cls(c)}">${c === NEXT ? 'След. сезон<small>план</small>' : `${esc(c)}<small>сезон ${(seasons.find(s => s.date === c)?.n) ?? '—'}</small>`}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(({ n, es }) => `<tr><th scope="row">№${esc(n)}</th>${cols.map(c => {
         const e = es.find(x => x.on[c] && x.driver) || es.find(x => x.on[c]);
         const any = e || es[0];
-        if (!e?.driver) return `<td class="${cls(c)}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}><div class="cc empty" style="--c:${teamStyle(any.team).color}" data-car="${esc(n)}"><span class="num">${esc(n)}</span><span class="abbr">${esc(teamStyle(any.team).short)}</span><span class="res">свободен</span></div></td>`;
+        if (!e?.driver) return `<td class="${cls(c)}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}><div class="cc empty" style="--c:${teamStyle(any.team).color}" data-car="${esc(n)}"><span class="num">${esc(n)}</span>${ftBadge(e)}<span class="abbr">${esc(teamStyle(any.team).short)}</span><span class="res">свободен</span></div></td>`;
         const d = rank[c]?.[e.driver];
-        return `<td class="${cls(c)}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}><div class="cc" style="--c:${teamStyle(e.team).color}" data-car="${esc(n)}" ${tipAttr([`#${e.num} · ${e.team}`, e.maker, nm(e.driver), d && `P${d.rank} · ${d.pts} очк.`])}>
-          <span class="num">${esc(e.num)}</span><span class="abbr">${esc(teamStyle(e.team).short)}</span>
+        return `<td class="${cls(c)}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}><div class="cc" style="--c:${teamStyle(e.team).color}" data-car="${esc(n)}" ${tipAttr([`#${e.num} · ${e.team}`, e.maker, e.full ? 'Фулл-тайм — чартер выдан' : 'Без чартера', nm(e.driver), d && `P${d.rank} · ${d.pts} очк.`])}>
+          <span class="num">${esc(e.num)}</span>${ftBadge(e)}<span class="abbr">${esc(teamStyle(e.team).short)}</span>
           <span class="drvname">${plink(e.driver)}</span>
           <span class="res">${d ? `P${d.rank} · ${d.pts}` : c === NEXT ? 'заявлен' : '&nbsp;'}${champs[c]?.includes(e.driver) ? ' 🏆' : ''}</span>
         </div></td>`;
@@ -727,7 +733,7 @@ function openCar(num) {
   const champs = Object.fromEntries(seasons.filter(s => !s.live).map(s => [s.date, s.champs]));
   const cols = [...charterDates, ...(hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${esc(curE.maker)} · ${scopeLabel()}</p><h2 class="dtitle"><span class="bignum">#${esc(num)}</span> ${tlink(curE.team, curE.team)}</h2></div>
+    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${esc(curE.maker)} · ${curE.full ? 'фулл-тайм' : 'без чартера'} · ${scopeLabel()}</p><h2 class="dtitle"><span class="bignum">#${esc(num)}</span> ${tlink(curE.team, curE.team)}</h2></div>
     ${statTiles(statsOf(rows))}
     <h3>По сезонам</h3>
     ${timeline(cols.map(c => {
@@ -736,7 +742,7 @@ function openCar(num) {
       return { at: c, color: e ? teamStyle(e.team).color : '', sel: c === cur, empty: !e?.driver,
         top: c === NEXT ? 'След. сезон' : `Сезон ${seasons.find(s => s.date === c)?.n ?? ''} · ${esc(c)}`,
         main: e?.driver ? plink(e.driver) : '<span class="muted">свободен</span>',
-        sub: e ? `${esc(teamStyle(e.team).short)}${d ? ` · P${d.rank} · ${d.pts}` : ''}${champs[c]?.includes(e.driver) ? ' 🏆' : ''}` : '' };
+        sub: e ? `${ftBadge(e)}${esc(teamStyle(e.team).short)}${d ? ` · P${d.rank} · ${d.pts}` : ''}${champs[c]?.includes(e.driver) ? ' 🏆' : ''}` : '' };
     }))}
     <h3>Гонки</h3>
     ${rows.length ? `<div class="scroll"><table class="data"><thead><tr><th data-best="none">Дата</th><th data-best="none">Трасса</th><th data-best="none">Пилот</th><th class="c" data-best="none">Место</th><th class="r" data-best="none">Очки</th></tr></thead><tbody>

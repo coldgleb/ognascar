@@ -323,3 +323,9 @@ td.c, th.c { text-align: center; }
 .icon-btn { width: 34px; height: 32px; padding: 0; font-size: 16px; line-height: 1; }
 h2 + .season-group { margin-top: 20px; }
 .tc-stats span.gold b { color: var(--gold); }
+
+/* фулл-тайм (чартер) */
+.ftb { display: inline-block; font: 700 9px/1 Inter, sans-serif; font-style: normal; letter-spacing: .04em; padding: 3px 4px; border-radius: 4px; background: var(--text); color: var(--bg); vertical-align: middle; }
+.cc .ftb { position: absolute; top: 4px; right: 4px; }
+.carnum .ftb { margin-left: 6px; vertical-align: super; }
+.tl-sub .ftb { margin-right: 4px; }
