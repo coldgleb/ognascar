@@ -75,7 +75,8 @@ td.r, th.r { text-align: right; }
 .chart-box { position: relative; height: 380px; padding: 16px; }
 
 .matrix td, .matrix th { text-align: center; padding: 6px 4px; }
-.matrix td:first-child, .matrix th:first-child { text-align: left; padding-left: 12px; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+.matrix td.drv, .matrix th:nth-child(2) { text-align: left; }
+.matrix tr:not(.grp-head) > :first-child { padding-left: 12px; }
 .matrix th .trk { display: block; color: var(--text); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 13px; }
 .matrix th.off { opacity: .55; }
 .cell { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; vertical-align: middle; width: 52px; height: 44px; border-radius: 6px; font-weight: 600; line-height: 1.1; position: relative; }
@@ -391,8 +392,8 @@ h2 + .season-group { margin-top: 20px; }
 .fade-l { -webkit-mask-image: linear-gradient(to left, #000 82%, transparent); mask-image: linear-gradient(to left, #000 82%, transparent); }
 .fade-l.fade-r { -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
 @media (max-width: 600px) { .seasonbar .sl { display: none; } }
-.data.sticky tr > :nth-child(1) { position: sticky; left: 0; z-index: 1; background: var(--surface); width: 40px; min-width: 40px; }
-.data.sticky tr > :nth-child(2) { position: sticky; left: 40px; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--border); }
+.data.sticky tr:not(.grp-head) > :nth-child(1) { position: sticky; left: 0; z-index: 1; background: var(--surface); width: 40px; min-width: 40px; }
+.data.sticky tr:not(.grp-head) > :nth-child(2) { position: sticky; left: 40px; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--border); }
 
 /* оглавление страницы «Сезоны» и «наверх» */
 .jump { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 0 20px; }

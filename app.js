@@ -308,7 +308,7 @@ function enhanceTables(root) {
   root.querySelectorAll('table.data').forEach(t => {
     const ths = [...t.tHead.rows[t.tHead.rows.length - 1].cells], rows = () => [...t.tBodies[0].rows];
     // колонка мест «#» — запоминаем исходные места, чтобы вернуть их при сортировке по «#» или тексту
-    const rankCol = ths.findIndex(th => th.textContent.trim() === '#');
+    const rankCol = ths.findIndex(th => th.textContent.trim() === '#' || th.hasAttribute('data-rankcol'));
     if (rankCol >= 0) rows().forEach(r => { r.cells[rankCol].dataset.r0 = r.cells[rankCol].textContent.trim(); });
     if (!t.classList.contains('nomax')) ths.forEach((th, i) => {
       const mode = th.dataset.best || 'max';
@@ -677,9 +677,9 @@ function viewSeasons() {
 
   <section id="s-results">
     <h2>Результаты по гонкам</h2>
-    <div class="card scroll"><table class="data nomax matrix">
-      <thead>${isAll ? `<tr class="grp-head"><th></th>${seasons.map((se, i) => `<th colspan="${se.list.length}" class="${i ? 'sep' : ''}"><a href="#" data-season="${esc(se.key)}">Сезон ${se.n} · ${esc(se.date)}</a></th>`).join('')}</tr>` : ''}<tr><th data-best="none">Гонщик</th>${list.map(s => `<th class="${s.counted ? '' : 'off'}${sep(s)}" data-best="min">${head(s)}</th>`).join('')}</tr></thead>
-      <tbody>${st.map(d => `<tr><td class="drv" data-v="${esc(nm(d.who))}">${plink(d.who)}</td>${list.map(s => {
+    <div class="card scroll"><table class="data nomax matrix sticky">
+      <thead>${isAll ? `<tr class="grp-head"><th colspan="3"></th>${seasons.map((se, i) => `<th colspan="${se.list.length}" class="${i ? 'sep' : ''}"><a href="#" data-season="${esc(se.key)}">Сезон ${se.n} · ${esc(se.date)}</a></th>`).join('')}</tr>` : ''}<tr><th data-best="none" data-rankcol>Место</th><th data-best="none">Гонщик</th><th class="r" data-best="none">Очки</th>${list.map(s => `<th class="${s.counted ? '' : 'off'}${sep(s)}" data-best="min">${head(s)}</th>`).join('')}</tr></thead>
+      <tbody>${st.map(d => `<tr><td class="pos${medal(d.rank)}" data-v="${d.rank}">${d.rank}</td><td class="drv" data-v="${esc(nm(d.who))}">${plink(d.who)}</td><td class="r pts" data-v="${d.pts}">${d.pts}</td>${list.map(s => {
         const r = s.rows.find(x => x.who === d.who);
         if (!r) return `<td class="muted${sep(s)}" data-v="">·</td>`;
         const tip = [raceName(s), s.counted ? `P${r.pos} · +${r.pts} очк.` : `P${r.pos} · очки не начисляются`, r.lead && (s.lapsKnown ? `Лидирование: ${r.laps} ${plural(r.laps, 'круг', 'круга', 'кругов')} (+${r.bonus})` : `Лидирование +${r.bonus}`) + (r.most ? ' — больше всех' : ''), r.time != null && !r.lapsDown && !r.dnf && `Время: ${fmtTime(r.time)}`, r.lap != null && `Лучший круг: ${fmtTime(r.lap)}${r.fastest ? ' — быстрейший' : ''}`, r.perfect && 'Идеальная гонка', r.dnf && (r.dnfReason || 'Сход'), r.lapsDown && `Отставание: ${r.lapsDown} ${plural(r.lapsDown, 'круг', 'круга', 'кругов')}`,
