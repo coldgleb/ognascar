@@ -3,9 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Чемпионат NASCAR 15</title>
+<title>OG NASCAR 15 Чемпионат</title>
+<meta name="description" content="Чемпионат OG Chat по NASCAR 15: сезоны, личный зачёт, протоколы гонок, пилоты, команды, производители и чартеры.">
+<meta name="theme-color" content="#111110">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23111110%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-family=%22Arial Black,Arial%22 font-size=%2217%22 font-weight=%22900%22 fill=%22%23e34948%22 text-anchor=%22middle%22%3E15%3C/text%3E%3C/svg%3E">
+<!-- превью ссылки в мессенджерах и соцсетях -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NASCAR 15 · OG Chat">
+<meta property="og:title" content="OG NASCAR 15 Чемпионат">
+<meta property="og:description" content="Сезоны, личный зачёт, протоколы гонок, пилоты, команды и чартеры чемпионата OG Chat.">
+<meta property="og:url" content="https://ognascar15.vercel.app/">
+<meta property="og:image" content="https://ognascar15.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ognascar15.vercel.app/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>try { var t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');</script>
 <link rel="stylesheet" href="style.css">
@@ -16,7 +31,7 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <h1>NASCAR <span>15</span> <br>Чемпионат</h1>
+      <h1>OG NASCAR <span>15</span> Чемпионат</h1>
       <p id="subtitle"><span class="skel-line"></span></p>
       <p id="updated" class="updated"></p>
     </div>
@@ -29,7 +44,7 @@
   <main id="app" tabindex="-1"></main>
   <footer>(с) OG Chat, 2026</footer>
 </div>
-<dialog id="dlg"><form method="dialog"><button class="dlg-close" aria-label="Закрыть">✕</button></form><button class="dlg-back" id="dlg-back" hidden>← Назад</button><div id="dlg-body"></div></dialog>
+<dialog id="dlg"><form method="dialog"><button class="dlg-close" aria-label="Закрыть">✕</button></form><button class="dlg-back" id="dlg-back" hidden>← Назад</button><button class="dlg-share" id="dlg-share" aria-label="Скопировать ссылку" title="Скопировать ссылку">🔗</button><div id="dlg-body"></div></dialog>
 
 <dialog id="finder" class="finder" aria-label="Поиск"><input id="finder-q" type="search" placeholder="Пилот, команда или номер машины…" autocomplete="off" aria-controls="finder-list"><ul id="finder-list" role="listbox"></ul><p class="finder-hint">↑↓ — выбор · Enter — открыть · Esc — закрыть</p></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

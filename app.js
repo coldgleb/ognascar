@@ -271,6 +271,7 @@ const medal = rank => rank <= 3 ? ` p${rank}` : '';
 const seasonOf = () => DATA.seasons.find(s => s.key === cur) || null;
 const scopeRows = rows => cur === 'all' ? rows : rows.filter(r => r.race.date === cur);
 const scopeLabel = () => seasonOf() ? `сезон ${seasonOf().n}` : 'все сезоны';
+const emptyState = (icon, title, hint) => `<div class="empty-state"><span class="es-icon" aria-hidden="true">${icon}</span><b>${title}</b>${hint ? `<span>${hint}</span>` : ''}</div>`;
 const tile = (label, num, hint = '', lead = false) => `<div class="card tile${lead ? ' leader' : ''}"><div class="label">${label}</div><div class="num">${num}</div><div class="hint">${hint}</div></div>`;
 const winOrBest = st => st.wins ? { num: st.wins, label: 'Победы', short: plural(st.wins, 'победа', 'победы', 'побед') }
   : st.best ? { num: `P${st.best.pos} <i class="mult">(×${st.bestCount})</i>`, label: 'Лучший результат', short: 'лучший' } : { num: '—', label: 'Победы', short: 'победы' };
@@ -289,7 +290,7 @@ let DATA, V, cur = null, tab = null, charts = [], dcharts = [], picked = new Map
 
 // ---------- таблицы: сортировка и максимум колонки ----------
 const cellVal = td => td ? (td.dataset.v ?? td.textContent.trim()) : '';
-const cellNum = td => { if (!td) return null; if (td.dataset.v !== undefined) return td.dataset.v === '' ? null : Number(td.dataset.v); const m = td.textContent.replace('−', '-').match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : null; };
+const cellNum = td => { if (!td) return null; if (td.dataset.v !== undefined) { const n = td.dataset.v === '' ? NaN : Number(td.dataset.v); return Number.isFinite(n) ? n : null; } const m = td.textContent.replace('−', '-').match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : null; };
 // data-move="A,B" data-after="C": колонки A и B переезжают сразу за C (по тексту заголовков).
 // Так «Очки» стоят сразу за именем и видны на телефоне без прокрутки таблицы.
 function moveCols(t) {
@@ -306,6 +307,9 @@ function enhanceTables(root) {
   root.querySelectorAll('table.data[data-move]').forEach(moveCols);
   root.querySelectorAll('table.data').forEach(t => {
     const ths = [...t.tHead.rows[t.tHead.rows.length - 1].cells], rows = () => [...t.tBodies[0].rows];
+    // колонка мест «#» — запоминаем исходные места, чтобы вернуть их при сортировке по «#» или тексту
+    const rankCol = ths.findIndex(th => th.textContent.trim() === '#');
+    if (rankCol >= 0) rows().forEach(r => { r.cells[rankCol].dataset.r0 = r.cells[rankCol].textContent.trim(); });
     if (!t.classList.contains('nomax')) ths.forEach((th, i) => {
       const mode = th.dataset.best || 'max';
       if (mode === 'none') return;
@@ -322,7 +326,8 @@ function enhanceTables(root) {
       th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); th.click(); } });
       th.addEventListener('click', e => {
         if (e.target.closest('a')) return;
-        const numeric = rows().every(r => cellNum(r.cells[i]) !== null || !cellVal(r.cells[i]));
+        const numeric = rows().some(r => cellNum(r.cells[i]) !== null) && rows().every(r => cellNum(r.cells[i]) !== null || !cellVal(r.cells[i]) || cellVal(r.cells[i]) === '—');
+        if (i === rankCol) rerank(t, rankCol, -1); // сортировка по «#» — по исходным местам
         const dir = th.dataset.dir === 'desc' ? 'asc' : th.dataset.dir === 'asc' ? 'desc' : (numeric && th.dataset.best !== 'min' && th.dataset.best !== 'none') ? 'desc' : 'asc';
         ths.forEach(x => { delete x.dataset.dir; x.removeAttribute('aria-sort'); }); th.dataset.dir = dir;
         th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending');
@@ -331,8 +336,24 @@ function enhanceTables(root) {
           if (numeric) return k * ((cellNum(a.cells[i]) ?? (k > 0 ? Infinity : -Infinity)) - (cellNum(b.cells[i]) ?? (k > 0 ? Infinity : -Infinity)));
           return k * cellVal(a.cells[i]).localeCompare(cellVal(b.cells[i]), 'ru');
         }).forEach(r => t.tBodies[0].appendChild(r));
+        rerank(t, rankCol, numeric && i !== rankCol && th.dataset.rank !== 'off' ? i : -1);
       });
     });
+  });
+}
+// Колонка «#» после сортировки: места по выбранному критерию, равные значения делят место (1-2-2-4-4).
+// Сортировка по самой «#» или по тексту — исходные места из зачёта.
+const shownNum = td => { const m = td.textContent.replace('−', '-').match(/-?\d+([.,]\d+)?/); return m ? Number(m[0].replace(',', '.')) : cellNum(td); };
+function rerank(t, rankCol, by) {
+  if (rankCol < 0) return;
+  let prev, rank;
+  [...t.tBodies[0].rows].forEach((r, n) => {
+    const c = r.cells[rankCol];
+    if (by < 0) rank = +c.dataset.r0;
+    else { const v = shownNum(r.cells[by]); if (!n || v !== prev) rank = n + 1; prev = v; }
+    c.textContent = rank; c.dataset.v = rank;
+    c.classList.remove('p1', 'p2', 'p3');
+    if (rank <= 3) c.classList.add('p' + rank);
   });
 }
 
@@ -418,7 +439,7 @@ document.addEventListener('click', e => {
   go({ ...NO_MODAL, ...season, [key]: d[key] || '1' });
 });
 const dlg = document.getElementById('dlg');
-dlg.addEventListener('close', () => { backStack = []; dcharts.forEach(c => c.destroy()); dcharts = []; tipEl.hidden = true; const h = readHash(); if (MODAL_KEYS.some(k => h[k])) go(NO_MODAL); });
+dlg.addEventListener('close', () => { backStack = []; document.title = BASE_TITLE; dcharts.forEach(c => c.destroy()); dcharts = []; tipEl.hidden = true; const h = readHash(); if (MODAL_KEYS.some(k => h[k])) go(NO_MODAL); });
 
 // «← Назад» в окне: возврат к предыдущему пилоту / команде / машине / гонке
 let backStack = [];
@@ -426,6 +447,18 @@ const backBtn = document.getElementById('dlg-back');
 backBtn.addEventListener('click', () => {
   let h; do h = backStack.pop(); while (h === location.hash && backStack.length);
   if (h && h !== location.hash) location.hash = h;
+});
+
+// Поделиться окном: на телефоне — системное меню «Поделиться», иначе — ссылка в буфер обмена
+const BASE_TITLE = document.title;
+document.getElementById('dlg-share').addEventListener('click', async () => {
+  const url = location.href, title = document.title;
+  if (touch.matches && navigator.share) {
+    try { await navigator.share({ title, url }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); }
+  catch { const i = Object.assign(document.createElement('input'), { value: url }); dlg.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); }
+  toast('Ссылка скопирована');
 });
 
 // Сезон сменился сам (клик по элементу другого сезона) — сообщаем и подсвечиваем кнопку сезона
@@ -461,7 +494,7 @@ function renderFinder() {
   fItems = fItems.slice(0, 12);
   fSel = Math.min(fSel, Math.max(0, fItems.length - 1));
   fl.innerHTML = fItems.map((i, k) => `<li role="option" id="f-${k}" aria-selected="${k === fSel}" data-k="${k}" style="--c:${i.color || 'var(--line-off)'}"><span class="f-kind">${i.kind}</span><span class="f-main"><b>${esc(i.label)}</b><span class="f-sub">${esc(i.sub)}</span></span></li>`).join('')
-    || '<li class="f-empty">Ничего не найдено</li>';
+    || '<li class="f-empty"><b>Ничего не нашлось</b><span>Попробуйте ник, имя из таблицы, команду или номер машины</span></li>';
   fq.setAttribute('aria-activedescendant', fItems.length ? `f-${fSel}` : '');
   fl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
 }
@@ -506,6 +539,7 @@ function showDialog(html) {
   makeFocusable(body);
   const title = body.querySelector('.dtitle');
   if (title) { title.id = 'dlg-title'; dlg.setAttribute('aria-labelledby', 'dlg-title'); } else dlg.removeAttribute('aria-labelledby');
+  document.title = title ? `${title.textContent.trim()} — OG NASCAR 15` : BASE_TITLE; // вкладка, закладки и «Поделиться» с названием окна
   backBtn.hidden = !backStack.length;
   if (!dlg.open) dlg.showModal();
   if (!toastEl.hidden) dlg.appendChild(toastEl); // уведомление — поверх окна, а не под затемнением
@@ -579,7 +613,7 @@ function viewSeasons() {
   const titleLeader = tally[0];
   const maxPts = Math.max(1, ...st.map(d => d.pts));
   const sep = s => isAll && list.indexOf(s) > 0 && list[list.indexOf(s) - 1].date !== s.date ? ' sep' : '';
-  const head = s => `${rlink(s)}${s.fn ? `<sup>${s.fn}</sup>` : ''}${s.counted ? '' : '<small>вне зачёта</small>'}`;
+  const head = s => `<span class="trk-name">${esc(trackName(s.track))}</span>${s.fn ? `<sup>${s.fn}</sup>` : ''}${s.counted ? '' : '<small>вне зачёта</small>'}`;
 
   const notes = [];
   for (const s of list) {
@@ -587,7 +621,7 @@ function viewSeasons() {
     if (lines.length) { s.fn = notes.length + 1; notes.push({ s, lines }); } else s.fn = 0;
   }
 
-  return `<nav class="jump" aria-label="Разделы страницы">${[...(isAll ? [['s-champs', 'Чемпионы']] : []), ['s-standings', 'Зачёт'], ['s-points', 'Очки'], ['s-chart', 'График'], ['s-results', 'Результаты'], ['s-races', 'Гонки']].map(([id, t]) => `<a href="#" data-jump="${id}">${t}</a>`).join('')}</nav>${isAll ? `
+  return `<nav class="jump" aria-label="Разделы страницы">${[...(isAll ? [['s-champs', 'Чемпионы']] : []), ['s-standings', 'Зачёт'], ['s-chart', 'График'], ['s-results', 'Результаты'], ['s-races', 'Гонки']].map(([id, t]) => `<a href="#" data-jump="${id}">${t}</a>`).join('')}</nav>${isAll ? `
   <section class="first" id="s-champs">
     <h2>Чемпионы</h2>
     <div class="hall">${[...seasons].reverse().map(s => {
@@ -603,7 +637,7 @@ function viewSeasons() {
 
   <section class="${isAll ? '' : 'first'}">
   <div class="tiles">
-    ${isAll ? tile('Больше всех титулов', esc(nm(titleLeader?.[0] ?? '—')), titleLeader ? `${titleLeader[1]} ${plural(titleLeader[1], 'титул', 'титула', 'титулов')}` : 'пока нет завершённых сезонов', true)
+    ${isAll ? tile('Больше всех титулов', esc(nm(titleLeader?.[0] ?? '—')), titleLeader ? `${titleLeader[1]} ${plural(titleLeader[1], 'титул', 'титула', 'титулов')}` : 'появится после первого завершённого сезона', true)
       : tile(season.live ? 'Лидер сезона' : 'Чемпион сезона', season.champs.map(w => esc(nm(w))).join(', '), `${leader.pts} очк.${second ? ` · +${leader.pts - second.pts} к ${esc(nm(second.who))}` : ''}`, true)}
     ${wins.n > 1 ? `<div class="card tile"><div class="label">Больше всех побед</div>${names(wins)}<div class="hint">${wins.n} ${plural(wins.n, 'победа', 'победы', 'побед')}${wins.who.length > 1 ? ' у каждого' : ''}</div></div>` : ''}
     ${most.n > 1 ? `<div class="card tile"><div class="label">Король лидирования</div>${names(most)}<div class="hint">наиб. лидирование в ${most.n} ${plural(most.n, 'гонке', 'гонках', 'гонках')}</div></div>` : ''}
@@ -614,7 +648,7 @@ function viewSeasons() {
   <section id="s-standings">
     <h2>Личный зачёт</h2>
     <div class="card scroll"><table class="data sticky" data-move="Машина,Титулы" data-after="Отст.">
-      <thead><tr><th data-best="none">#</th><th data-best="none">Гонщик</th><th data-best="none">Машина</th>${isAll ? '<th class="r" data-best="none">Титулы</th>' : ''}<th class="r" data-best="none">Очки</th><th data-sort="off" data-best="none"></th><th class="r" data-best="none">Отст.</th><th class="r">Старты</th>
+      <thead><tr><th data-best="none">#</th><th data-best="none">Гонщик</th><th data-best="none" data-rank="off">Машина</th>${isAll ? '<th class="r" data-best="none">Титулы</th>' : ''}<th class="r" data-best="none">Очки</th><th data-sort="off" data-best="none"></th><th class="r" data-best="none">Отст.</th><th class="r">Старты</th>
         <th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th><th class="r">DNF</th></tr></thead>
       <tbody>${st.map(d => `<tr>
         <td class="pos${medal(d.rank)}" data-v="${d.rank}">${d.rank}</td>
@@ -632,18 +666,6 @@ function viewSeasons() {
     </table></div>
   </section>
 
-  <section id="s-points">
-    <h2>Очки по ${isAll ? 'сезонам' : 'гонкам'}</h2>
-    <div class="card scroll"><table class="data ptable sticky">
-      <thead><tr><th data-best="none">#</th><th data-best="none">Пилот</th>${(isAll ? seasons : list).map(c => `<th class="r${!isAll && !c.counted ? ' off' : ''}"${!isAll && !c.counted ? ' data-best="none"' : ''}>${isAll ? `Сезон ${c.n}<small>${esc(c.date)}</small>` : rlink(c) + (c.counted ? '' : '<small>вне зачёта</small>')}</th>`).join('')}<th class="r" data-best="none">Очки</th></tr></thead>
-      <tbody>${st.map(d => `<tr><td class="pos${medal(d.rank)}" data-v="${d.rank}">${d.rank}</td><td data-v="${esc(nm(d.who))}">${plink(d.who)}</td>${(isAll ? seasons : list).map(c => {
-        const x = isAll ? DATA.rank[c.date][d.who] : c.rows.find(r => r.who === d.who);
-        if (!isAll && !c.counted) return `<td class="r off" data-v="${x ? x.pos : ''}" ${x ? tipAttr([raceName(c), `P${x.pos}`, 'Гонка вне зачёта — очки не начисляются']) : ''}>${x ? `<span class="muted">P${x.pos}</span>` : '<span class="muted">—</span>'}</td>`;
-        return `<td class="r" data-v="${x ? x.pts : 0}">${x ? x.pts : '<span class="muted">0</span>'}</td>`;
-      }).join('')}<td class="r pts">${d.pts}</td></tr>`).join('')}</tbody>
-    </table></div>
-  </section>
-
   <section id="s-chart">
     <h2>Гонка за титул</h2>
     <div class="card" style="padding:16px 16px 0">
@@ -655,7 +677,7 @@ function viewSeasons() {
   <section id="s-results">
     <h2>Результаты по гонкам</h2>
     <div class="card scroll"><table class="data nomax matrix">
-      <thead>${isAll ? `<tr class="grp-head"><th></th>${seasons.map((se, i) => `<th colspan="${se.list.length}" class="${i ? 'sep' : ''}"><a href="#" data-season="${esc(se.key)}">Сезон ${se.n} · ${esc(se.date)}</a></th>`).join('')}</tr>` : ''}<tr><th data-best="none">Гонщик</th>${list.map(s => `<th class="${s.counted ? '' : 'off'}${sep(s)}">${head(s)}</th>`).join('')}</tr></thead>
+      <thead>${isAll ? `<tr class="grp-head"><th></th>${seasons.map((se, i) => `<th colspan="${se.list.length}" class="${i ? 'sep' : ''}"><a href="#" data-season="${esc(se.key)}">Сезон ${se.n} · ${esc(se.date)}</a></th>`).join('')}</tr>` : ''}<tr><th data-best="none">Гонщик</th>${list.map(s => `<th class="${s.counted ? '' : 'off'}${sep(s)}" data-best="min">${head(s)}</th>`).join('')}</tr></thead>
       <tbody>${st.map(d => `<tr><td class="drv" data-v="${esc(nm(d.who))}">${plink(d.who)}</td>${list.map(s => {
         const r = s.rows.find(x => x.who === d.who);
         if (!r) return `<td class="muted${sep(s)}" data-v="">·</td>`;
@@ -730,7 +752,7 @@ function viewRecords() {
     rows.forEach((r, i) => r.rank = i && rows[i - 1][1] === r[1] ? rows[i - 1].rank : i + 1);
     const li = ([w, v, ...rest], i, arr) => `<li><span class="lb-rank${medal(arr[i].rank)}">${arr[i].rank}</span><span class="lb-name">${b.maker ? `<span class="swatch" style="background:${makerColor(w)}"></span>${esc(w)}` : plink(w)}</span><b>${b.unit ? b.unit(v) : v}</b></li>`;
     return `<div class="card lb${b.wide ? ' wide' : ''}"><div class="lb-head"><span class="lb-icon">${b.icon}</span>${b.title}</div>
-      ${rows.length ? `<ol>${rows.slice(0, LIMIT).map(li).join('')}</ol>${rows.length > LIMIT ? `<details><summary>ещё ${rows.length - LIMIT}</summary><ol>${rows.slice(LIMIT).map((r, i) => li(r, i + LIMIT, rows)).join('')}</ol></details>` : ''}` : '<p class="muted lb-empty">пока нет</p>'}
+      ${rows.length ? `<ol>${rows.slice(0, LIMIT).map(li).join('')}</ol>${rows.length > LIMIT ? `<details><summary>ещё ${rows.length - LIMIT}</summary><ol>${rows.slice(LIMIT).map((r, i) => li(r, i + LIMIT, rows)).join('')}</ol></details>` : ''}` : '<p class="muted lb-empty">Пока пусто — появится по ходу сезона</p>'}
     </div>`;
   }).join('')}</div>`;
 }
@@ -758,9 +780,9 @@ function viewPilots() {
         <span class="pc-mid"><span class="pc-name">${esc(nm(d.who))}${titles[d.who] ? ` <span class="pc-t">🏆${titles[d.who] > 1 ? '×' + titles[d.who] : ''}</span>` : ''}</span><span class="pc-team">${e ? esc(teamStyle(e.team).short) : 'без чартера'}</span></span>
         <span class="pc-right"><span class="pc-rank${medal(d.rank)}">P${d.rank}</span><span class="pc-pts">${d.pts} очк.</span></span>
       </a>`;
-  }).join('')}${extra.map(w => `<a href="#" class="card pc dim" data-pilot="${esc(w)}"><span class="pc-num">—</span><span class="pc-mid"><span class="pc-name">${esc(nm(w))}</span><span class="pc-team">ещё не выступал</span></span></a>`).join('')}</div>`
+  }).join('')}${extra.map(w => `<a href="#" class="card pc dim" data-pilot="${esc(w)}"><span class="pc-num">—</span><span class="pc-mid"><span class="pc-name">${esc(nm(w))}</span><span class="pc-team">в заявке · дебют впереди</span></span></a>`).join('')}</div>`
       : `<div class="card scroll"><table class="data sticky" data-move="Титулы,Вице,Машина" data-after="Очки">
-      <thead><tr><th data-best="none">#</th><th data-best="none">Пилот</th><th data-best="none">Машина</th>${season ? '' : '<th class="r">Титулы</th><th class="r">Вице</th>'}<th class="r" data-best="none">Очки</th><th class="r">Старты</th><th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th><th class="r">Лидер кругов</th><th class="r">Идеальные</th>${season ? '' : '<th class="r" data-best="min">1-я победа</th>'}<th class="r" data-best="none">DNF</th></tr></thead>
+      <thead><tr><th data-best="none">#</th><th data-best="none">Пилот</th><th data-best="none" data-rank="off">Машина</th>${season ? '' : '<th class="r">Титулы</th><th class="r">Вице</th>'}<th class="r" data-best="none">Очки</th><th class="r">Старты</th><th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th><th class="r">Лидер кругов</th><th class="r">Идеальные</th>${season ? '' : '<th class="r" data-best="min">1-я победа</th>'}<th class="r" data-best="none">DNF</th></tr></thead>
       <tbody>${st.map(d => `<tr><td class="pos${medal(d.rank)}" data-v="${d.rank}">${d.rank}</td><td data-v="${esc(nm(d.who))}">${plink(d.who)}</td><td data-v="${esc(carFor(d.who)?.num ?? '')}">${carTag(carFor(d.who))}</td>
         ${season ? '' : `<td class="r" data-v="${rec.t[d.who] || 0}">${zero(rec.t[d.who])}</td><td class="r" data-v="${rec.v[d.who] || 0}">${zero(rec.v[d.who])}</td>`}<td class="r pts">${d.pts}</td><td class="r">${d.starts}</td><td class="r">${zero(d.wins)}</td><td class="r">${zero(d.podiums)}</td>
         <td class="r" data-v="${d.avg ?? ''}">${d.avg == null ? '—' : d.avg.toFixed(1)}</td><td class="r">${d.led}</td><td class="r">${zero(d.most)}</td><td class="r">${zero(d.perfect)}</td>${season ? '' : `<td class="r" data-v="${rec.fw[d.who] ?? ''}">${rec.fw[d.who] ?? '<span class="muted">—</span>'}</td>`}<td class="r">${zero(d.dnf)}</td></tr>`).join('')}</tbody>
@@ -826,12 +848,12 @@ function openTeam(name) {
   const nums = [...new Set(t.entries.map(e => e.num))].filter(n => t.entries.some(e => e.num === n && e.driver));
   const who = [...new Set([...t.rows.map(r => r.who), ...t.entries.filter(e => e.driver).map(e => e.driver)])];
   const nowSet = new Set(t.entries.filter(e => e.on[lastDate] || e.on[NEXT]).map(e => e.driver).filter(Boolean));
-  const chip = w => { const s = statsOf(rows.filter(r => r.who === w)); return `<a href="#" class="pchip big${nowSet.has(w) ? '' : ' past'}" data-pilot="${esc(w)}">${esc(nm(w))}<small>${s.starts ? `${s.pts} очк. · ${s.wins} поб.` : 'нет стартов'}</small></a>`; };
+  const chip = w => { const s = statsOf(rows.filter(r => r.who === w)); return `<a href="#" class="pchip big${nowSet.has(w) ? '' : ' past'}" data-pilot="${esc(w)}">${esc(nm(w))}<small>${s.starts ? `${s.pts} очк. · ${s.wins} поб.` : 'стартов пока нет'}</small></a>`; };
   const titles = seasons.filter(s => !s.live && s.champs.some(w => chOf(w, s.date)?.team === name));
   const cols = [...DATA.charterDates, ...(DATA.hasNext ? [NEXT] : [])];
   showDialog(`
     <div class="dhead" style="--c:${t.color}"><p class="eyebrow">Команда · ${esc([...t.makers].join(', '))} · ${scopeLabel()}</p><h2 class="dtitle">${esc(t.name)}</h2></div>
-    ${statTiles(statsOf(rows), tile('Титулы пилотов', titles.length, titles.map(s => `${s.champs.filter(w => chOf(w, s.date)?.team === name).map(w => esc(nm(w))).join(', ')} (${esc(s.date)})`).join(', ') || 'пока нет', true))}
+    ${statTiles(statsOf(rows), tile('Титулы пилотов', titles.length, titles.map(s => `${s.champs.filter(w => chOf(w, s.date)?.team === name).map(w => esc(nm(w))).join(', ')} (${esc(s.date)})`).join(', ') || 'пока без титулов', true))}
     <h3>Пилоты</h3>
     <div class="chiprow">${[...nowSet].map(chip).join('')}</div>
     ${who.some(w => !nowSet.has(w)) ? `<p class="mini-label">Раньше</p><div class="chiprow">${who.filter(w => !nowSet.has(w)).map(chip).join('')}</div>` : ''}
@@ -843,7 +865,7 @@ function openTeam(name) {
       const e = t.entries.find(x => x.num === n && x.on[c]); const d = e?.driver && rank[c]?.[e.driver];
       return `<span class="mt${c === cur ? ' sel' : ''}${e?.driver ? '' : ' empty'}"${c !== NEXT ? ` data-at="${esc(c)}"` : ''}${e?.driver ? ` data-pilot="${esc(e.driver)}"` : ''} ${tipAttr([c === NEXT ? 'След. сезон' : `Сезон ${seasons.find(x => x.date === c)?.n ?? ''} · ${c}`, e?.driver ? nm(e.driver) : 'свободен', d && `P${d.rank} · ${d.pts} очк.`])}><small>${c === NEXT ? 'след.' : 'С' + (seasons.find(x => x.date === c)?.n ?? '')}</small> ${e?.driver ? esc(nm(e.driver)) : '—'}</span>`;
     }).join('')}</div>
-        <div class="carbest">${s.best ? `Лучший финиш: <b>P${s.best.pos}</b> — ${plink(s.best.who)}, ${esc(raceName(s.best.race))}` : '<span class="muted">Нет стартов</span>'}</div></div>`;
+        <div class="carbest">${s.best ? `Лучший финиш: <b>P${s.best.pos}</b> — ${plink(s.best.who)}, ${esc(raceName(s.best.race))}` : '<span class="muted">В этом сезоне на ней не выезжали</span>'}</div></div>`;
   }).join('')}</div>
     <h3>Командный зачёт по сезонам</h3>
     <div class="scroll"><table class="data"><thead><tr><th data-best="none">Сезон</th><th class="r" data-best="none">Место</th><th class="r" data-best="none">Очки</th><th class="r">Победы</th><th data-best="none">Пилоты</th></tr></thead><tbody>
@@ -870,7 +892,7 @@ function viewMakers() {
         <div class="mc-head"><span class="mc-name">${esc(x.m.name)}</span></div>
         <div class="tc-stats"><span${gold(wobKey)}><b>${winOrBest(x).num}</b>${winOrBest(x).short}</span><span${gold(y => y.pts)}><b>${x.pts}</b>очки</span><span${gold(y => y.podiums)}><b>${x.podiums}</b>подиумы</span></div>
         <p class="mini-label">Лучшие пилоты</p>
-        <ol class="toplist">${topPilots(x.m).map(([w, p]) => `<li>${plink(w)}<span class="muted">${p}</span></li>`).join('') || '<li class="muted">нет стартов</li>'}</ol>
+        <ol class="toplist">${topPilots(x.m).map(([w, p]) => `<li>${plink(w)}<span class="muted">${p}</span></li>`).join('') || '<li class="muted">Пока без стартов</li>'}</ol>
         <p class="mini-label">Команды</p>
         <div class="chiprow">${teamsOf(x.m).map(t => tlink(t.name)).join(' ') || '<span class="muted">—</span>'}</div>
       </div>`;
@@ -967,7 +989,7 @@ function openCar(num) {
     <h3>Гонки</h3>
     ${rows.length ? `<div class="scroll"><table class="data"><thead><tr><th data-best="none">Гонка</th><th data-best="none">Пилот</th><th class="c" data-best="none">Место</th><th class="r" data-best="none">Очки</th></tr></thead><tbody>
       ${rows.map(r => `<tr class="${r.race.counted ? '' : 'off'}" data-at="${esc(r.race.date)}"><td data-v="${r.race.id}">${rlink(r.race)}<small class="maker-sub">${esc(r.race.date)}</small></td><td data-v="${esc(nm(r.who))}">${plink(r.who)}</td><td class="c" data-v="${r.pos}"><span class="cell sm ${posCls(r.pos)}">${r.pos}</span></td><td class="r" data-v="${r.pts}">${r.race.counted ? r.pts : '<span class="muted">вне зачёта</span>'}</td></tr>`).join('')}
-    </tbody></table></div>` : '<p class="muted">Нет стартов</p>'}
+    </tbody></table></div>` : emptyState('🏁', 'На этой машине ещё не выезжали', 'Гонки появятся здесь после первого старта')}
   `);
 }
 
@@ -993,6 +1015,7 @@ function openPilot(who) {
       sub: e ? `#${esc(e.num)} ${tlink(e.team)} · ${esc(e.maker)}` : d ? 'без чартера' : ''
     };
   }).filter(i => !i.empty))}
+    ${!st.starts && seasonOf() ? emptyState('🏎', `В сезоне ${seasonOf().n} не выступал`, 'Выберите «Все сезоны» или другой сезон, чтобы увидеть результаты') : ''}
     ${st.starts ? `<h3>Места по гонкам</h3><div class="chart-box small"><canvas id="dchart" role="img" aria-label="Места пилота по гонкам"></canvas></div>` : ''}
     ${pens.length ? `<h3>Штрафы</h3><ul class="plain">${pens.map(r => `<li>${rlink(r.race)} ${esc(r.race.date)}: −${r.penalty} (финиш ${r.origPos} → ${r.pos})${r.penaltyNote ? ` — ${esc(r.penaltyNote)}` : ''}</li>`).join('')}</ul>` : ''}
   `);
@@ -1060,7 +1083,7 @@ function openCompare(a, b) {
       <details class="h2h-list"><summary>Все очные гонки</summary><div class="scroll"><table class="data nomax"><thead><tr><th data-best="none">Гонка</th><th class="c">${esc(nm(a))}</th><th class="c">${esc(nm(b))}</th></tr></thead><tbody>
       ${h2h.map(x => `<tr data-at="${esc(x.race.date)}"><td data-v="${x.race.id}">${rlink(x.race)} <span class="muted">${esc(x.race.date)}</span></td><td class="c" data-v="${x.ra.pos}"><span class="cell sm ${posCls(x.ra.pos)}">${x.ra.pos}</span></td><td class="c" data-v="${x.rb.pos}"><span class="cell sm ${posCls(x.rb.pos)}">${x.rb.pos}</span></td></tr>`).join('')}
       </tbody></table></div></details>`
-      : '<p class="muted">Не стартовали вместе в зачётных гонках.</p>'}
+      : emptyState('🤝', 'Ещё не встречались на трассе', 'Очные встречи появятся, когда оба пилота стартуют в одной зачётной гонке')}
   `);
   document.querySelectorAll('.cmp-sel').forEach(s => s.addEventListener('change', () => {
     const v = { a, b, [s.dataset.side]: s.value };

@@ -31,7 +31,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, sans-serif; }
 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 16px 64px; }
-h1, h2, .num { font-family: "Barlow Condensed", Inter, sans-serif; }
+h1, h2, .num { font-family: "Fira Sans Extra Condensed", Inter, sans-serif; }
 header { padding: 40px 0 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: end; justify-content: space-between; }
 header h1 { margin: 0; font-size: clamp(40px, 7vw, 64px); line-height: .95; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
 header h1 span { color: var(--accent); }
@@ -60,11 +60,11 @@ th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); t
 td { padding: 9px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 tr:last-child td { border-bottom: 0; }
 td.r, th.r { text-align: right; }
-.pos { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; width: 36px; }
+.pos { font-family: "Fira Sans Extra Condensed", sans-serif; font-size: 22px; font-weight: 700; width: 36px; }
 .p1 { color: var(--gold); } .p2 { color: var(--silver); } .p3 { color: var(--bronze); }
 .drv { font-weight: 600; cursor: pointer; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; background: var(--line-off); vertical-align: 0; }
-.pts { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 20px; }
+.pts { font-family: "Fira Sans Extra Condensed", sans-serif; font-weight: 700; font-size: 20px; }
 .barcell { min-width: 140px; }
 .bar { height: 8px; border-radius: 0 4px 4px 0; background: var(--q3); }
 .delta { font-size: 12px; margin-left: 4px; }
@@ -94,10 +94,10 @@ td.r, th.r { text-align: right; }
 .stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 .stage { padding: 16px; }
 .stage .top { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
-.stage h3 { margin: 2px 0 10px; font-family: "Barlow Condensed", sans-serif; font-size: 26px; text-transform: uppercase; }
+.stage h3 { margin: 2px 0 10px; font-family: "Fira Sans Extra Condensed", sans-serif; font-size: 26px; text-transform: uppercase; }
 .stage ol { margin: 0; padding: 0; list-style: none; }
 .stage li { display: flex; justify-content: space-between; padding: 3px 0; }
-.stage li b { font-family: "Barlow Condensed", sans-serif; width: 22px; display: inline-block; }
+.stage li b { font-family: "Fira Sans Extra Condensed", sans-serif; width: 22px; display: inline-block; }
 .badge { font-size: 12px; border-radius: 999px; padding: 1px 8px; background: var(--surface-2); color: var(--text-2); }
 .badge.off { color: var(--s8); }
 .note { margin-top: 10px; font-size: 13px; color: var(--text-2); border-top: 1px solid var(--grid); padding-top: 8px; }
@@ -107,13 +107,13 @@ footer a { color: inherit; }
 
 /* ---------- навигация ---------- */
 .main-nav { padding: 10px 0 6px; display: flex; gap: 4px; overflow-x: auto; }
-.main-nav button { border: 0; background: none; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); padding: 4px 12px; white-space: nowrap; }
+.main-nav button { border: 0; background: none; font-family: "Fira Sans Extra Condensed", sans-serif; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); padding: 4px 12px; white-space: nowrap; }
 .main-nav button:hover { color: var(--text); background: var(--surface-2); }
 .main-nav button[aria-pressed="true"] { color: var(--text); box-shadow: inset 0 -3px 0 var(--accent); border-radius: 0; }
 .lnk { color: inherit; text-decoration: none; font-weight: 600; border-bottom: 1px dotted var(--muted); }
 .lnk:hover { border-bottom-style: solid; }
 .lnk.tl { border-bottom: 2px solid var(--cs); font-weight: 500; }
-.car { display: inline-block; font: italic 800 15px/1 "Barlow Condensed", sans-serif; padding: 2px 6px 2px 5px; border-left: 3px solid var(--cs); background: color-mix(in srgb, var(--c) 18%, var(--surface)); border-radius: 3px; }
+.car { display: inline-block; font: italic 800 15px/1 "Fira Sans Extra Condensed", sans-serif; padding: 2px 6px 2px 5px; border-left: 3px solid var(--cs); background: color-mix(in srgb, var(--c) 18%, var(--surface)); border-radius: 3px; }
 
 /* ---------- сноски ---------- */
 .matrix sup { color: var(--accent); font-weight: 700; margin-left: 2px; }
@@ -129,7 +129,7 @@ dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100vh - 48px); 
 dialog::backdrop { background: rgba(0, 0, 0, .55); }
 .dlg-close { position: sticky; top: 12px; float: right; margin: 12px 12px 0 0; z-index: 2; border-radius: 999px; width: 36px; height: 36px; padding: 0; font-size: 18px; }
 #dlg-body { padding: 24px; }
-#dlg-body h3 { font: 700 22px "Barlow Condensed", sans-serif; text-transform: uppercase; margin: 28px 0 8px; }
+#dlg-body h3 { font: 700 22px "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; margin: 28px 0 8px; }
 .eyebrow { margin: 0; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
 .dtitle { font-size: clamp(32px, 6vw, 48px); margin: 0 0 16px; overflow-wrap: anywhere; }
 .dtitle.tcolor { border-left: 6px solid var(--cs); padding-left: 12px; }
@@ -142,16 +142,16 @@ tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; c
 /* ---------- матрица чартеров (по мотивам nascar-charters) ---------- */
 .cm { border-collapse: separate; border-spacing: 3px; font-size: 11px; table-layout: fixed; min-width: 640px; }
 .cm th, .cm td { padding: 0; border: 0; }
-.cm thead th { font: 700 17px "Barlow Condensed", sans-serif; color: var(--text-2); padding: 8px 2px; text-align: center; }
+.cm thead th { font: 700 17px "Fira Sans Extra Condensed", sans-serif; color: var(--text-2); padding: 8px 2px; text-align: center; }
 .cm thead th:first-child { width: 52px; }
 .cm th small { display: block; font: 11px Inter, sans-serif; color: var(--muted); text-transform: none; letter-spacing: 0; }
-.cm tbody th { position: sticky; left: 0; background: var(--surface); z-index: 1; font: 700 14px "Barlow Condensed", sans-serif; color: var(--text-2); padding: 0 6px; }
+.cm tbody th { position: sticky; left: 0; background: var(--surface); z-index: 1; font: 700 14px "Fira Sans Extra Condensed", sans-serif; color: var(--text-2); padding: 0 6px; }
 .cc { position: relative; height: 62px; padding: 4px 6px; border-radius: 5px; cursor: pointer; overflow: hidden;
   background: color-mix(in srgb, var(--c) 16%, var(--surface)); border-left: 4px solid var(--cs);
   display: grid; grid-template-columns: auto 1fr; column-gap: 6px; align-items: center; }
 .cc:hover { outline: 1px solid var(--cs); }
-.cc .num { font: italic 800 24px/1 "Barlow Condensed", sans-serif; grid-row: 1 / 3; }
-.cc .abbr { font: 700 11px/1.05 "Barlow Condensed", sans-serif; text-transform: uppercase; color: var(--text-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cc .num { font: italic 800 24px/1 "Fira Sans Extra Condensed", sans-serif; grid-row: 1 / 3; }
+.cc .abbr { font: 700 11px/1.05 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; color: var(--text-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .cc .drvname { font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .cc .res { grid-column: 1 / -1; color: var(--text-2); font-size: 11px; white-space: nowrap; }
 .cc.empty { filter: grayscale(.8); opacity: .45; border-left-style: dashed; }
@@ -162,8 +162,6 @@ tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; c
 }
 #dlg-body .tiles { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 #dlg-body .tile .num { font-size: 32px; }
-.ptable th.r { white-space: normal; min-width: 64px; }
-.ptable th.r { white-space: normal; min-width: 64px; }
 
 /* ===== v3: сквозной сезон, таблицы, подсказки, результаты ===== */
 :root { --c-gold: #f4cf5a; --c-silver: #d6dae0; --c-bronze: #e6ad84; --c-green: #c4ebcb; --c-blue: #a9cdf6; --c-on: #0b0b0b; --best: color-mix(in srgb, #eda100 22%, transparent); --perfect: #7b3fe4; }
@@ -224,13 +222,13 @@ tr.sel td { background: color-mix(in srgb, var(--s1) 10%, transparent); }
 .pc { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 12px; padding: 0 14px 0 0; min-height: 60px; color: inherit; text-decoration: none; overflow: hidden; }
 .pc:hover { background: var(--surface-2); }
 .pc.dim { opacity: .55; }
-.pc-num { align-self: stretch; display: grid; place-items: center; font: italic 800 28px/1 "Barlow Condensed", sans-serif; background: color-mix(in srgb, var(--c) 30%, var(--surface)); border-right: 4px solid var(--cs); }
+.pc-num { align-self: stretch; display: grid; place-items: center; font: italic 800 28px/1 "Fira Sans Extra Condensed", sans-serif; background: color-mix(in srgb, var(--c) 30%, var(--surface)); border-right: 4px solid var(--cs); }
 .pc-mid { display: flex; flex-direction: column; min-width: 0; }
-.pc-name { font: 700 22px/1.1 "Barlow Condensed", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-name { font: 700 22px/1.1 "Fira Sans Extra Condensed", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-t { font-size: 14px; }
 .pc-team { font-size: 12px; color: var(--muted); }
 .pc-right { display: flex; flex-direction: column; align-items: end; }
-.pc-rank { font: 700 24px/1 "Barlow Condensed", sans-serif; }
+.pc-rank { font: 700 24px/1 "Fira Sans Extra Condensed", sans-serif; }
 .pc-pts { font-size: 12px; color: var(--text-2); }
 
 /* команды */
@@ -238,13 +236,13 @@ tr.sel td { background: color-mix(in srgb, var(--s1) 10%, transparent); }
 .tc { display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; color: inherit; text-decoration: none; overflow: hidden; }
 .tc:hover { box-shadow: 0 0 0 2px var(--cs); }
 .tc-head { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; padding: 12px 14px; background: color-mix(in srgb, var(--c) 28%, var(--surface)); border-top: 5px solid var(--cs); }
-.tc-rank { grid-row: 1 / 3; font: 700 28px/1 "Barlow Condensed", sans-serif; align-self: center; }
-.tc-name { font: 700 20px/1.1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.tc-rank { grid-row: 1 / 3; font: 700 28px/1 "Fira Sans Extra Condensed", sans-serif; align-self: center; }
+.tc-name { font: 700 20px/1.1 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; }
 .tc-maker { font-size: 12px; color: var(--text-2); }
 .tc-nums, .tc-pilots { padding: 0 14px; display: flex; flex-wrap: wrap; gap: 4px; }
 .tc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); padding: 0 14px; gap: 8px; }
 .tc-stats span { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.tc-stats b { font: 700 24px/1.1 "Barlow Condensed", sans-serif; color: var(--text); letter-spacing: 0; }
+.tc-stats b { font: 700 24px/1.1 "Fira Sans Extra Condensed", sans-serif; color: var(--text); letter-spacing: 0; }
 .pchip { display: inline-flex; flex-direction: column; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); font-size: 13px; font-weight: 600; color: inherit; text-decoration: none; }
 .pchip.big { border-radius: 10px; padding: 6px 12px; border: 1px solid var(--border); }
 .pchip.big:hover { border-color: var(--text-2); }
@@ -258,7 +256,7 @@ tr.sel td { background: color-mix(in srgb, var(--s1) 10%, transparent); }
 .mc { padding: 16px; border-top: 5px solid var(--c); }
 .mc .tc-stats { padding: 0; margin: 12px 0 4px; }
 .mc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.mc-name { font: 700 30px/1 "Barlow Condensed", sans-serif; margin-right: auto; }
+.mc-name { font: 700 30px/1 "Fira Sans Extra Condensed", sans-serif; margin-right: auto; }
 .toplist { margin: 0; padding-left: 20px; }
 .toplist li { display: flex; justify-content: space-between; padding: 2px 0; }
 
@@ -278,11 +276,11 @@ tr.sel td { background: color-mix(in srgb, var(--s1) 10%, transparent); }
 .tl-item.empty { opacity: .5; }
 .tl-top { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .tl-main { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tl-rank { font: 700 20px/1 "Barlow Condensed", sans-serif; }
+.tl-rank { font: 700 20px/1 "Fira Sans Extra Condensed", sans-serif; }
 .tl-sub { font-size: 12px; color: var(--text-2); }
 .cars { display: grid; gap: 8px; }
 .carcard { display: grid; grid-template-columns: 64px 1fr; gap: 6px 12px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--cs); }
-.carnum { grid-row: 1 / 3; font: italic 800 30px/1 "Barlow Condensed", sans-serif; color: inherit; text-decoration: none; }
+.carnum { grid-row: 1 / 3; font: italic 800 30px/1 "Fira Sans Extra Condensed", sans-serif; color: inherit; text-decoration: none; }
 .carnum:hover { color: var(--accent); }
 .mini-tl { display: flex; flex-wrap: wrap; gap: 4px; }
 .mt { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--c) 18%, var(--surface)); }
@@ -291,7 +289,6 @@ tr.sel td { background: color-mix(in srgb, var(--s1) 10%, transparent); }
 .carbest { font-size: 13px; color: var(--text-2); }
 .mt small { color: var(--muted); font-weight: 700; margin-right: 2px; }
 tr.off td, td.off { opacity: .6; }
-.ptable th.off { opacity: .7; }
 td.c, th.c { text-align: center; }
 .legend-row > span { display: inline-flex; align-items: center; gap: 4px; }
 .legend-row .cell { margin-right: 0; }
@@ -304,21 +301,21 @@ td.c, th.c { text-align: center; }
 .lb ol { columns: 2 190px; column-gap: 24px; }
 .lb li { break-inside: avoid; }
 .lb { padding: 14px 14px 10px; }
-.lb-head { display: flex; align-items: center; gap: 8px; font: 700 18px/1.1 "Barlow Condensed", sans-serif; text-transform: uppercase; margin-bottom: 8px; }
+.lb-head { display: flex; align-items: center; gap: 8px; font: 700 18px/1.1 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; margin-bottom: 8px; }
 .lb-icon { font-size: 16px; width: 22px; text-align: center; }
 .lb ol { list-style: none; margin: 0; padding: 0; }
 .lb li { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 6px; padding: 3px 0; font-size: 14px; border-bottom: 1px solid var(--grid); }
 .lb li:last-child { border-bottom: 0; }
-.lb-rank { font: 700 15px "Barlow Condensed", sans-serif; color: var(--muted); }
+.lb-rank { font: 700 15px "Fira Sans Extra Condensed", sans-serif; color: var(--muted); }
 .lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb li b { font: 700 17px "Barlow Condensed", sans-serif; }
+.lb li b { font: 700 17px "Fira Sans Extra Condensed", sans-serif; }
 .lb details summary { cursor: pointer; font-size: 12px; color: var(--muted); padding-top: 4px; }
 .lb-empty { margin: 4px 0; font-size: 13px; }
 
 /* гонки по сезонам */
 .season-group + .season-group { margin-top: 28px; }
 .season-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 0 0 8px 12px; margin-bottom: 12px; border-left: 4px solid var(--accent); border-bottom: 1px solid var(--border); }
-.sh-title { font: 700 22px/1.1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.sh-title { font: 700 22px/1.1 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; }
 .sh-meta { font-size: 13px; color: var(--text-2); }
 .icon-btn { width: 34px; height: 32px; padding: 0; font-size: 16px; line-height: 1; }
 h2 + .season-group { margin-top: 20px; }
@@ -363,16 +360,16 @@ h2 + .season-group { margin-top: 20px; }
 .cmp-side { display: flex; flex-direction: column; gap: 4px; border-left: 5px solid var(--c); padding-left: 10px; }
 .cmp-side.b { border-left: 0; border-right: 5px solid var(--c); padding: 0 10px 0 0; align-items: end; text-align: right; }
 .cmp-side .lnk { font-size: 12px; font-weight: 400; color: var(--muted); }
-.cmp-sel { font: 700 22px/1.2 "Barlow Condensed", sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; max-width: 100%; }
-.cmp-vs { font: italic 800 22px "Barlow Condensed", sans-serif; color: var(--muted); }
+.cmp-sel { font: 700 22px/1.2 "Fira Sans Extra Condensed", sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; max-width: 100%; }
+.cmp-vs { font: italic 800 22px "Fira Sans Extra Condensed", sans-serif; color: var(--muted); }
 .cmp-rows { display: grid; gap: 2px; }
 .cmp-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 6px 4px; border-bottom: 1px solid var(--grid); }
 .cmp-l { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; min-width: 120px; }
-.cmp-v { font: 700 22px/1.1 "Barlow Condensed", sans-serif; color: var(--text-2); }
+.cmp-v { font: 700 22px/1.1 "Fira Sans Extra Condensed", sans-serif; color: var(--text-2); }
 .cmp-v.b { text-align: right; }
 .cmp-v.win { color: var(--gold); }
 .h2h { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
-.h2h-n { font: 700 30px/1 "Barlow Condensed", sans-serif; }
+.h2h-n { font: 700 30px/1 "Fira Sans Extra Condensed", sans-serif; }
 .h2h-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; }
 .h2h-bar i { display: block; }
 .h2h-cap { margin: 6px 0 10px; font-size: 13px; color: var(--text-2); text-align: center; }
@@ -515,3 +512,15 @@ dialog#dlg { overflow-x: hidden; }
 .mlogo { width: 34px; height: 22px; }
 #dlg-body td.opt { white-space: nowrap; }
 @media (max-width: 640px) { #dlg-body .mlogo { width: 24px; height: 16px; } #dlg-body th, #dlg-body td { padding-left: 3px; padding-right: 3px; } #dlg-body .lnk { overflow-wrap: anywhere; } }
+
+.matrix th .trk-name { color: var(--text); font-weight: 600; font-size: 13px; text-transform: none; letter-spacing: 0; }
+.dlg-share { position: sticky; top: 12px; float: right; margin: 12px 8px 0 0; z-index: 2; border-radius: 999px; width: 36px; height: 36px; padding: 0; font-size: 15px; }
+
+/* пустые состояния */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 22px 16px; text-align: center; border: 1px dashed var(--border); border-radius: 12px; color: var(--text-2); }
+.empty-state .es-icon { font-size: 28px; line-height: 1; margin-bottom: 4px; }
+.empty-state b { color: var(--text); font-size: 15px; }
+.empty-state span { font-size: 13px; }
+.f-empty { display: flex !important; flex-direction: column; gap: 2px; padding: 14px 10px !important; }
+.f-empty b { color: var(--text); }
+.f-empty span { font-size: 12px; }
