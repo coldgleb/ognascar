@@ -11,24 +11,29 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="checker"></div>
+<a class="skip" href="#" id="skip">К содержимому</a>
+<div class="checker" aria-hidden="true"></div>
 <div class="wrap">
   <header>
-    <div>
-      <h1>NASCAR <span>15</span><br>Чемпионат</h1>
-      <p id="subtitle">Загружаю данные…</p>
+    <div class="brand">
+      <h1>NASCAR <span>15</span> <br>Чемпионат</h1>
+      <p id="subtitle"><span class="skel-line"></span></p>
+      <p id="updated" class="updated"></p>
     </div>
-    <div class="toolbar"><span id="updated"></span><button id="theme" class="icon-btn"></button><button id="reload">Обновить</button></div>
+    <div class="toolbar"><button class="icon-btn" id="find-btn" aria-label="Поиск (Ctrl+K)" title="Поиск — Ctrl+K или /">🔍</button><button class="icon-btn" data-help="1" aria-label="Как считаются очки" title="Как считаются очки">?</button><button id="theme" class="icon-btn"></button><button id="reload" aria-label="Обновить данные"><span class="ri" aria-hidden="true">↻</span><span class="rl"> Обновить</span></button></div>
   </header>
   <div class="bars">
-  <nav class="main-nav" id="nav"><button data-tab="seasons">Сезоны</button><button data-tab="pilots">Пилоты</button><button data-tab="teams">Команды</button><button data-tab="makers">Производители</button><button data-tab="charters">Чартеры</button></nav>
-  <nav class="seasonbar" id="seasonbar"></nav>
+  <nav class="main-nav" id="nav" aria-label="Разделы"><button data-tab="seasons">Сезоны</button><button data-tab="pilots">Пилоты</button><button data-tab="teams">Команды</button><button data-tab="makers">Производители</button><button data-tab="charters">Чартеры</button></nav>
+  <nav class="seasonbar" id="seasonbar" aria-label="Сезон"></nav>
   </div>
-  <div id="app"><div class="status">Загружаю таблицу…</div></div>
+  <main id="app" tabindex="-1"></main>
   <footer>(с) OG Chat, 2026</footer>
 </div>
-<dialog id="dlg"><form method="dialog"><button class="dlg-close" aria-label="Закрыть">✕</button></form><div id="dlg-body"></div></dialog>
+<dialog id="dlg"><form method="dialog"><button class="dlg-close" aria-label="Закрыть">✕</button></form><button class="dlg-back" id="dlg-back" hidden>← Назад</button><div id="dlg-body"></div></dialog>
 
+<dialog id="finder" class="finder" aria-label="Поиск"><input id="finder-q" type="search" placeholder="Пилот, команда или номер машины…" autocomplete="off" aria-controls="finder-list"><ul id="finder-list" role="listbox"></ul><p class="finder-hint">↑↓ — выбор · Enter — открыть · Esc — закрыть</p></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<button id="totop" class="totop" hidden aria-label="Наверх">↑</button>
 <div class="tip" id="tip" role="tooltip" hidden></div>
 <script src="app.js"></script>
 </body>
