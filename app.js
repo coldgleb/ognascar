@@ -481,7 +481,7 @@ function finderIndex() {
   const nums = [...new Set(DATA.entries.filter(e => e.driver).map(e => e.num))];
   return [
     ...[...pilots].map(p => { const e = lastCar(p); return { kind: 'Пилот', label: nm(p), sub: [nm(p) !== p && p, e && `#${e.num} ${teamStyle(e.team).short}`].filter(Boolean).join(' · '), key: { pilot: p }, text: norm(`${nm(p)} ${p}`), color: e ? teamStyle(e.team).color : '' }; }),
-    ...[...DATA.teams.values()].filter(t => t.entries.some(e => e.driver)).map(t => ({ kind: 'Команда', label: t.name, sub: [...t.makers].join(', '), key: { team: t.name }, text: norm(`${t.name} ${t.short}`), color: t.color })),
+    ...[...DATA.teams.values()].filter(t => t.entries.some(e => e.driver)).map(t => ({ kind: 'Команда', label: t.name, sub: '', logo: [...t.makers].map(makerLogo).join(' '), key: { team: t.name }, text: norm(`${t.name} ${t.short}`), color: t.color })),
     ...nums.map(n => { const e = DATA.entries.find(x => x.num === n && x.on[DATA.lastDate] && x.driver) || DATA.entries.find(x => x.num === n && x.driver); return { kind: 'Машина', label: `#${n}`, sub: `${teamStyle(e.team).short} · ${nm(e.driver)}`, key: { car: n }, text: norm(`${n} ${e.team}`), color: teamStyle(e.team).color }; }),
   ];
 }
@@ -494,7 +494,7 @@ function renderFinder() {
     : all.filter(i => i.kind === 'Пилот').sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   fItems = fItems.slice(0, 12);
   fSel = Math.min(fSel, Math.max(0, fItems.length - 1));
-  fl.innerHTML = fItems.map((i, k) => `<li role="option" id="f-${k}" aria-selected="${k === fSel}" data-k="${k}" style="--c:${i.color || 'var(--line-off)'}"><span class="f-kind">${i.kind}</span><span class="f-main"><b>${esc(i.label)}</b><span class="f-sub">${esc(i.sub)}</span></span></li>`).join('')
+  fl.innerHTML = fItems.map((i, k) => `<li role="option" id="f-${k}" aria-selected="${k === fSel}" data-k="${k}" style="--c:${i.color || 'var(--line-off)'}"><span class="f-kind">${i.kind}</span><span class="f-main"><b>${esc(i.label)}</b><span class="f-sub">${i.logo || ''}${esc(i.sub)}</span></span></li>`).join('')
     || '<li class="f-empty"><b>Ничего не нашлось</b><span>Попробуйте ник, имя из таблицы, команду или номер машины</span></li>';
   fq.setAttribute('aria-activedescendant', fItems.length ? `f-${fSel}` : '');
   fl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
@@ -751,7 +751,7 @@ function viewRecords() {
   return `<div class="lbgrid">${records().filter(b => !b.all || !seasonOf()).map(b => {
     const rows = b.rows.filter(([, v]) => b.zero ? v >= 0 : v > 0).sort((x, y) => (b.asc ? x[1] - y[1] : y[1] - x[1]) || nm(x[0]).localeCompare(nm(y[0]), 'ru'));
     rows.forEach((r, i) => r.rank = i && rows[i - 1][1] === r[1] ? rows[i - 1].rank : i + 1);
-    const li = ([w, v, ...rest], i, arr) => `<li><span class="lb-rank${medal(arr[i].rank)}">${arr[i].rank}</span><span class="lb-name">${b.maker ? `<span class="swatch" style="background:${makerColor(w)}"></span>${esc(w)}` : plink(w)}</span><b>${b.unit ? b.unit(v) : v}</b></li>`;
+    const li = ([w, v, ...rest], i, arr) => `<li><span class="lb-rank${medal(arr[i].rank)}">${arr[i].rank}</span><span class="lb-name">${b.maker ? `${makerLogo(w)} ${esc(w)}` : plink(w)}</span><b>${b.unit ? b.unit(v) : v}</b></li>`;
     return `<div class="card lb${b.wide ? ' wide' : ''}"><div class="lb-head"><span class="lb-icon">${b.icon}</span>${b.title}</div>
       ${rows.length ? `<ol>${rows.slice(0, LIMIT).map(li).join('')}</ol>${rows.length > LIMIT ? `<details><summary>ещё ${rows.length - LIMIT}</summary><ol>${rows.slice(LIMIT).map((r, i) => li(r, i + LIMIT, rows)).join('')}</ol></details>` : ''}` : '<p class="muted lb-empty">Пока пусто — появится по ходу сезона</p>'}
     </div>`;
@@ -800,7 +800,15 @@ function teamScope() {
 function viewTeams() {
   const list = teamScope();
   const season = seasonOf();
-  const now = t => t.entries.filter(e => e.driver && (season ? e.on[season.date] : e.on[DATA.lastDate] || e.on[NEXT]));
+  // пилоты карточки: в сезоне — числившиеся за командой в нём; во «Всех сезонах» — все, кто провёл за неё хотя бы сезон.
+  // Выделены (и идут первыми) выезжавшие в выбранном сезоне, во «Всех сезонах» — в последнем; остальные серые
+  const pilotsOf = t => {
+    const drove = e => e.driver && (season ? e.on[season.date] : DATA.charterDates.some(d => e.on[d]));
+    // выделены только те, кто в последнем сезоне реально выезжал за команду (а не просто отмечен)
+    const date = season ? season.date : DATA.lastDate; // выбранный сезон или, во «Всех сезонах», последний
+    const raced = new Set(t.rows.filter(r => r.race.date === date).map(r => r.who));
+    return [...new Set(t.entries.filter(drove).map(e => e.driver))].map(w => ({ w, cur: raced.has(w) })).sort((a, b) => b.cur - a.cur);
+  };
   return `<section class="first">
     <h2>Командный зачёт · ${scopeLabel()}</h2>
     <div class="card" style="padding:16px"><div class="chart-box" style="height:${list.length * 30 + 40}px;padding:0"><canvas id="teamchart" role="img" aria-label="Очки команд по пилотам"></canvas></div></div>
@@ -809,9 +817,9 @@ function viewTeams() {
     <h2>Команды</h2>
     <div class="grid tgrid">${list.map(x => {
     const { t, rank, pts } = x, wb = winOrBest(x); return `<a href="#" class="card tc" data-team="${esc(t.name)}" style="--c:${t.color}">
-      <span class="tc-head"><span class="tc-rank${medal(rank)}">P${rank}</span><span class="tc-name">${esc(t.name)}</span><span class="tc-maker">${esc([...t.makers].join(', '))}</span></span>
+      <span class="tc-head"><span class="tc-rank${medal(rank)}">P${rank}</span><span class="tc-name">${esc(t.name)}</span><span class="tc-maker">${[...t.makers].map(makerLogo).join(' ')}</span></span>
       <span class="tc-nums">${[...new Set(t.entries.filter(e => e.driver).map(e => e.num))].map(n => `<span class="car" style="--c:${t.color}">#${esc(n)}</span>`).join(' ')}</span>
-      <span class="tc-pilots">${now(t).map(e => `<span class="pchip">${esc(nm(e.driver))}</span>`).join('')}</span>
+      <span class="tc-pilots">${pilotsOf(t).map(p => `<span class="pchip${p.cur ? ' cur' : ' past'}" ${tipAttr([p.cur ? (season ? 'Выезжал в этом сезоне' : 'Выезжал в последнем сезоне') : (season ? 'В этом сезоне не выезжал' : 'В последнем сезоне не выезжал')])}>${esc(nm(p.w))}</span>`).join('')}</span>
       <span class="tc-stats"><span><b>${pts}</b>очки</span><span><b>${wb.num}</b>${wb.short}</span></span>
     </a>`;
   }).join('')}</div>
@@ -819,7 +827,7 @@ function viewTeams() {
   <section>
     <div class="card scroll"><table class="data sticky" data-move="Марка" data-after="Очки">
       <thead><tr><th data-best="none">#</th><th data-best="none">Команда</th><th data-best="none">Марка</th><th class="r" data-best="none">Очки</th><th class="r">Старты</th><th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th></tr></thead>
-      <tbody>${list.map(x => `<tr><td class="pos${medal(x.rank)}" data-v="${x.rank}">${x.rank}</td><td data-v="${esc(x.team)}">${tlink(x.team, x.team)}</td><td>${esc([...x.t.makers].join(', '))}</td><td class="r pts">${x.pts}</td><td class="r">${x.starts}</td><td class="r">${zero(x.wins)}</td><td class="r">${zero(x.podiums)}</td><td class="r" data-v="${x.avg ?? ''}">${x.avg == null ? '—' : x.avg.toFixed(1)}</td><td class="r">${x.led}</td></tr>`).join('')}</tbody>
+      <tbody>${list.map(x => `<tr><td class="pos${medal(x.rank)}" data-v="${x.rank}">${x.rank}</td><td data-v="${esc(x.team)}">${tlink(x.team, x.team)}</td><td data-v="${esc([...x.t.makers].join(', '))}">${[...x.t.makers].map(makerLogo).join(' ')}</td><td class="r pts">${x.pts}</td><td class="r">${x.starts}</td><td class="r">${zero(x.wins)}</td><td class="r">${zero(x.podiums)}</td><td class="r" data-v="${x.avg ?? ''}">${x.avg == null ? '—' : x.avg.toFixed(1)}</td><td class="r">${x.led}</td></tr>`).join('')}</tbody>
     </table></div>
   </section>`;
 }
@@ -853,7 +861,7 @@ function openTeam(name) {
   const titles = seasons.filter(s => !s.live && s.champs.some(w => chOf(w, s.date)?.team === name));
   const cols = [...DATA.charterDates, ...(DATA.hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${t.color}"><p class="eyebrow">Команда · ${esc([...t.makers].join(', '))} · ${scopeLabel()}</p><h2 class="dtitle">${esc(t.name)}</h2></div>
+    <div class="dhead" style="--c:${t.color}"><p class="eyebrow">Команда · ${[...t.makers].map(makerLogo).join(' ')} · ${scopeLabel()}</p><h2 class="dtitle">${esc(t.name)}</h2></div>
     ${statTiles(statsOf(rows), tile('Титулы пилотов', titles.length, titles.map(s => `${s.champs.filter(w => chOf(w, s.date)?.team === name).map(w => esc(nm(w))).join(', ')} (${esc(s.date)})`).join(', ') || 'пока без титулов', true))}
     <h3>Пилоты</h3>
     <div class="chiprow">${[...nowSet].map(chip).join('')}</div>
@@ -890,7 +898,7 @@ function viewMakers() {
     // лучшее значение среди марок — золотом (если оно одно не у всех)
     const gold = (k, better = Math.max) => { const vals = list.map(k).filter(v => v != null); const b = better(...vals); return vals.length && new Set(vals).size > 1 && k(x) === b ? ' class="gold"' : ''; };
     return `<div class="card mc" style="--c:${makerColor(x.m.name)}">
-        <div class="mc-head"><span class="mc-name">${esc(x.m.name)}</span></div>
+        <div class="mc-head"><span class="mc-name">${makerLogo(x.m.name)} ${esc(x.m.name)}</span></div>
         <div class="tc-stats"><span${gold(wobKey)}><b>${winOrBest(x).num}</b>${winOrBest(x).short}</span><span${gold(y => y.pts)}><b>${x.pts}</b>очки</span><span${gold(y => y.podiums)}><b>${x.podiums}</b>подиумы</span></div>
         <p class="mini-label">Лучшие пилоты</p>
         <ol class="toplist">${topPilots(x.m).map(([w, p]) => `<li>${plink(w)}<span class="muted">${p}</span></li>`).join('') || '<li class="muted">Пока без стартов</li>'}</ol>
@@ -974,7 +982,7 @@ function openCar(num) {
   const champs = Object.fromEntries(seasons.filter(s => !s.live).map(s => [s.date, s.champs]));
   const cols = [...charterDates, ...(hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${esc(curE.maker)} · ${curE.full ? 'фулл-тайм' : 'без чартера'} · ${scopeLabel()}</p><h2 class="dtitle"><span class="bignum">#${esc(num)}</span> ${tlink(curE.team, curE.team)}</h2></div>
+    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${makerLogo(curE.maker)} · ${curE.full ? 'фулл-тайм' : 'без чартера'} · ${scopeLabel()}</p><h2 class="dtitle"><span class="bignum">#${esc(num)}</span> ${tlink(curE.team, curE.team)}</h2></div>
     ${statTiles(statsOf(rows))}
     <h3>По сезонам</h3>
     ${timeline(cols.map(c => {
@@ -1013,7 +1021,7 @@ function openPilot(who) {
       at: c, color: e ? teamStyle(e.team).color : '', sel: c === cur, empty: !e && !d,
       top: c === NEXT ? 'След. сезон' : `Сезон ${s?.n ?? ''} · ${esc(c)}`,
       main: d ? `<span class="tl-rank${medal(d.rank)}">P${d.rank}</span> ${d.pts} очк.${s?.champs.includes(who) && !s.live ? ' 🏆' : ''}` : c === NEXT && e ? 'заявлен' : '<span class="muted">—</span>',
-      sub: e ? `#${esc(e.num)} ${tlink(e.team)} · ${esc(e.maker)}` : d ? 'без чартера' : ''
+      sub: e ? `#${esc(e.num)} ${tlink(e.team)} ${makerLogo(e.maker)}` : d ? 'без чартера' : ''
     };
   }).filter(i => !i.empty))}
     ${!st.starts && seasonOf() ? emptyState('🏎', `В сезоне ${seasonOf().n} не выступал`, 'Выберите «Все сезоны» или другой сезон, чтобы увидеть результаты') : ''}
@@ -1118,11 +1126,11 @@ function openHelp() {
 function pilotRaces(rows) {
   const hasTime = rows.some(r => r.time != null || r.dnfReason), hasLap = rows.some(r => r.lap != null);
   return `<h3>Результаты</h3><div class="scroll"><table class="data">
-    <thead><tr><th data-best="none">Гонка</th><th class="c" data-best="none">Место</th>${hasTime ? '<th class="r" data-best="none">Время</th>' : ''}${hasLap ? '<th class="r opt" data-best="none">Лучший круг</th>' : ''}<th class="r" data-best="none">Очки</th><th class="r opt">Лидирование</th></tr></thead>
+    <thead><tr><th data-best="none">Гонка</th><th class="c" data-best="none">Место</th><th class="c" data-best="none" data-sort="off" aria-label="Идеальная гонка"></th>${hasTime ? '<th class="r" data-best="none">Время</th>' : ''}${hasLap ? '<th class="r opt" data-best="none">Лучший круг</th>' : ''}<th class="r" data-best="none">Очки</th><th class="r opt">Лидирование</th></tr></thead>
     <tbody>${rows.map(r => `<tr class="${r.race.counted ? '' : 'off'}" data-at="${esc(r.race.date)}">
-      <td data-v="${r.race.id}">${rlink(r.race)}<small class="maker-sub">${esc(r.race.date)}${r.race.counted ? '' : ' · вне зачёта'}</small></td>
-      <td class="c" data-v="${r.pos}">${r.perfect ? `<i class="mk perfect static" ${tipAttr(['Идеальная гонка', 'Победа и наибольшее лидирование'])}>✦</i> ` : ''}<span class="cell sm ${posCls(r.pos)}">${r.pos}</span>${penMark(r)}</td>
-      ${hasTime ? `<td class="r" data-v="${timeSort(r)}">${timeCell(r)}${hasLap && r.lap != null ? `<small class="sm-only">${lapCell(r)}</small>` : ''}</td>` : ''}${hasLap ? `<td class="r opt" data-v="${r.lap ?? ''}">${lapCell(r)}</td>` : ''}
+      <td data-v="${r.race.id}">${rlink(r.race)}${r.race.counted ? '' : ' <span class="badge off">вне зачёта</span>'}</td>
+      <td class="c" data-v="${r.pos}"><span class="cell sm ${posCls(r.pos)}">${r.pos}</span>${penMark(r)}</td><td class="c">${r.perfect ? `<i class="mk perfect static" ${tipAttr(['Идеальная гонка', 'Победа и наибольшее лидирование'])}>✦</i>` : ''}</td>
+      ${hasTime ? `<td class="r" data-v="${r.dnf ? 1e9 : r.time ?? ''}">${r.dnf ? `<span class="dnf-t">${esc(r.dnfReason || 'сход')}</span>` : r.time != null ? fmtTime(r.time) : ''}${hasLap && r.lap != null ? `<small class="sm-only">${lapCell(r)}</small>` : ''}</td>` : ''}${hasLap ? `<td class="r opt" data-v="${r.lap ?? ''}">${lapCell(r)}</td>` : ''}
       <td class="r pts" data-v="${r.pts}">${r.race.counted ? r.pts : '<span class="muted">0</span>'}${r.laps ? `<small class="sm-only">${lapsCell(r)}</small>` : ''}</td><td class="r opt" data-v="${r.laps}">${lapsCell(r)}</td>
     </tr>`).join('')}</tbody></table></div>`;
 }
