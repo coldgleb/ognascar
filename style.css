@@ -67,8 +67,6 @@ td.r, th.r { text-align: right; }
 .pts { font-family: "Fira Sans Extra Condensed", sans-serif; font-weight: 700; font-size: 20px; }
 .barcell { min-width: 140px; }
 .bar { height: 8px; border-radius: 0 4px 4px 0; background: var(--q3); }
-.delta { font-size: 12px; margin-left: 4px; }
-.up { color: var(--s3); } .down { color: var(--s8); }
 .muted { color: var(--muted); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
@@ -416,7 +414,7 @@ section[id^="s-"] { scroll-margin-top: calc(var(--bars-h, 100px) + 12px); }
 /* «Назад» в окне */
 .dlg-back { position: sticky; top: 12px; float: left; margin: 12px 0 0 12px; z-index: 2; border-radius: 999px; font-size: 13px; padding: 6px 12px; }
 .dlg-back[hidden] { display: none; }
-.dlg-back:not([hidden]) + #dlg-body { padding-top: 56px; }
+.dlg-back:not([hidden]) ~ #dlg-body { padding-top: 56px; }
 
 /* поиск */
 .finder { width: min(560px, calc(100vw - 24px)); margin-top: 10vh; padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); }
@@ -524,3 +522,4 @@ dialog#dlg { overflow-x: hidden; }
 .f-empty { display: flex !important; flex-direction: column; gap: 2px; padding: 14px 10px !important; }
 .f-empty b { color: var(--text); }
 .f-empty span { font-size: 12px; }
+.tl-item[data-go-season]:not(.sel):hover { box-shadow: 0 0 0 2px var(--text-2); }

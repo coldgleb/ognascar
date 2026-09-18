@@ -162,6 +162,8 @@ function parse({ results, points, charters, drivers, stages, penalties }) {
     }
   }
   if (unmatched.size) console.warn('Без чартера:', [...unmatched]);
+  const timed = new Set(list.filter(s => s.rows.some(r => r.time != null)).map(s => s.date));
+  for (const s of list) s.lapsKnown = timed.has(s.date);
   return { list, entries, charterDates, hasNext, names, winBonus, placePts, leadBonus, mostBonus };
 }
 
@@ -203,8 +205,6 @@ function summarize(list) {
     return rankAll(names.map(who => ({ who, ...statsOf(rows.filter(r => r.who === who)) })), x => x.who);
   };
   const now = table(counted.length);
-  const prev = counted.length > 1 ? table(counted.length - 1) : null;
-  now.forEach(d => { d.change = prev ? prev.find(p => p.who === d.who).rank - d.rank : 0; });
   const progress = Object.fromEntries(names.map(n => [n, []]));
   list.forEach((_, i) => table(i + 1, list).forEach(d => progress[d.who].push(d.pts)));
   return { list, counted, standings: now, progress };
@@ -283,7 +283,7 @@ const statTiles = (st, extra = '') => `<div class="tiles">${extra}
   ${tile('Ср. место', st.avg == null ? '—' : st.avg.toFixed(1), `сходов ${st.dnf} · лидировал ${st.led}`)}
 </div>`;
 // Таймлайн: ряд карточек сезонов
-const timeline = items => `<div class="tl-row">${items.map(i => `<div class="tl-item${i.sel ? ' sel' : ''}${i.empty ? ' empty' : ''}"${i.at && i.at !== NEXT ? ` data-at="${esc(i.at)}"` : ''} style="--c:${i.color || 'var(--line-off)'}">
+const timeline = items => `<div class="tl-row">${items.map(i => `<div class="tl-item${i.sel ? ' sel' : ''}${i.empty ? ' empty' : ''}"${i.at && i.at !== NEXT ? ` data-at="${esc(i.at)}" data-go-season="${esc(i.at)}"${tipAttr([i.at === cur ? 'Выбранный сезон' : 'Показать этот сезон'])}` : ''} style="--c:${i.color || 'var(--line-off)'}">
   <span class="tl-top">${i.top}</span><span class="tl-main">${i.main}</span><span class="tl-sub">${i.sub || '&nbsp;'}</span></div>`).join('')}</div>`;
 
 let DATA, V, cur = null, tab = null, charts = [], dcharts = [], picked = new Map(), hideEmpty = true, pilotsMode = 'cards';
@@ -397,7 +397,7 @@ function readHash() {
 const NO_MODAL = { pilot: null, team: null, car: null, race: null, help: null, cmp: null };
 const MODAL_KEYS = Object.keys(NO_MODAL);
 // всё кликабельное (кроме ссылок и кнопок) — доступно с клавиатуры
-const CLICKABLE = '[data-pilot],[data-team],[data-car],[data-race],[data-season],[data-help],[data-cmp]';
+const CLICKABLE = '[data-pilot],[data-team],[data-car],[data-race],[data-season],[data-help],[data-cmp],[data-go-season]';
 function makeFocusable(root) {
   root.querySelectorAll(CLICKABLE).forEach(el => { if (!el.matches('a,button,select')) { el.tabIndex = 0; el.setAttribute('role', 'button'); } });
   root.querySelectorAll('[data-tip]:not([aria-label])').forEach(el => el.setAttribute('aria-label', el.dataset.tip.split('\n').join(', ')));
@@ -430,6 +430,7 @@ document.addEventListener('click', e => {
   const d = el.dataset;
   if (d.tab) return go({ ...NO_MODAL, tab: d.tab });
   if (d.season) return go({ ...NO_MODAL, season: d.season });
+  if (d.goSeason) return d.goSeason !== cur && go({ season: d.goSeason }); // сезон меняется, открытое окно остаётся
   // Элемент другого сезона — переключаемся на его сезон (при «Все сезоны» остаёмся во всех)
   const at = d.race ? DATA.list.find(s => s.id === d.race)?.date : el.closest('[data-at]')?.dataset.at;
   const season = at && cur !== 'all' && at !== cur && DATA.seasons.some(s => s.key === at) ? { season: at } : {};
@@ -652,7 +653,7 @@ function viewSeasons() {
         <th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th><th class="r">DNF</th></tr></thead>
       <tbody>${st.map(d => `<tr>
         <td class="pos${medal(d.rank)}" data-v="${d.rank}">${d.rank}</td>
-        <td class="drv" data-v="${esc(nm(d.who))}"><span class="swatch" data-sw="${esc(d.who)}"></span>${plink(d.who)}${d.change ? `<span class="delta ${d.change > 0 ? 'up' : 'down'}">${d.change > 0 ? '▲' : '▼'}${Math.abs(d.change)}</span>` : ''}</td>
+        <td class="drv" data-v="${esc(nm(d.who))}"><span class="swatch" data-sw="${esc(d.who)}"></span>${plink(d.who)}</td>
         <td data-v="${esc(chOf(d.who, carDate)?.num ?? '')}">${carTag(chOf(d.who, carDate))}</td>
         ${isAll ? `<td class="r" data-v="${titles[d.who] || 0}">${titles[d.who] ? '🏆'.repeat(Math.min(titles[d.who], 3)) + (titles[d.who] > 3 ? '×' + titles[d.who] : '') : '<span class="muted">—</span>'}</td>` : ''}
         <td class="r pts">${d.pts}</td>
@@ -681,7 +682,7 @@ function viewSeasons() {
       <tbody>${st.map(d => `<tr><td class="drv" data-v="${esc(nm(d.who))}">${plink(d.who)}</td>${list.map(s => {
         const r = s.rows.find(x => x.who === d.who);
         if (!r) return `<td class="muted${sep(s)}" data-v="">·</td>`;
-        const tip = [raceName(s), s.counted ? `P${r.pos} · +${r.pts} очк.` : `P${r.pos} · очки не начисляются`, r.lead && `Лидирование: ${r.laps} ${plural(r.laps, 'круг', 'круга', 'кругов')} (+${r.bonus})${r.most ? ' — больше всех' : ''}`, r.time != null && !r.lapsDown && !r.dnf && `Время: ${fmtTime(r.time)}`, r.lap != null && `Лучший круг: ${fmtTime(r.lap)}${r.fastest ? ' — быстрейший' : ''}`, r.perfect && 'Идеальная гонка', r.dnf && (r.dnfReason || 'Сход'), r.lapsDown && `Отставание: ${r.lapsDown} ${plural(r.lapsDown, 'круг', 'круга', 'кругов')}`,
+        const tip = [raceName(s), s.counted ? `P${r.pos} · +${r.pts} очк.` : `P${r.pos} · очки не начисляются`, r.lead && (s.lapsKnown ? `Лидирование: ${r.laps} ${plural(r.laps, 'круг', 'круга', 'кругов')} (+${r.bonus})` : `Лидирование +${r.bonus}`) + (r.most ? ' — больше всех' : ''), r.time != null && !r.lapsDown && !r.dnf && `Время: ${fmtTime(r.time)}`, r.lap != null && `Лучший круг: ${fmtTime(r.lap)}${r.fastest ? ' — быстрейший' : ''}`, r.perfect && 'Идеальная гонка', r.dnf && (r.dnfReason || 'Сход'), r.lapsDown && `Отставание: ${r.lapsDown} ${plural(r.lapsDown, 'круг', 'круга', 'кругов')}`,
         r.penalty && `Штраф −${r.penalty}${r.penaltyNote ? ': ' + r.penaltyNote : ''} (финиш ${r.origPos} → ${r.pos})`, !s.counted && 'Гонка вне зачёта'];
         return `<td class="${sep(s).trim()}" data-v="${r.pos}"><span class="cell ${posCls(r.pos)}${s.counted ? '' : ' off'}" tabindex="0" data-tip-race="${esc(s.id)}" ${tipAttr(tip)}>${r.pos}<small>${s.counted ? '+' + r.pts : 'вне з.'}</small>${r.perfect ? '<i class="mk tr perfect">✦</i>' : r.most ? '<i class="mk tr star">★</i>' : r.lead ? '<i class="mk tr led">★</i>' : ''}${r.dnf ? '<i class="mk bl dnf">✕</i>' : ''}${r.penalty ? `<i class="mk br pen">−${r.penalty}</i>` : ''}</span></td>`;
       }).join('')}</tr>`).join('')}</tbody>
@@ -1002,7 +1003,7 @@ function openPilot(who) {
   const pens = my.filter(r => r.penalty);
   const cols = [...charterDates, ...(hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${lastCar(who) ? teamStyle(lastCar(who).team).color : 'var(--line-off)'}"><p class="eyebrow">Пилот${names[who] && names[who] !== who ? ` · «${esc(who)}»` : ''} · ${scopeLabel()}</p>
+    <div class="dhead" style="--c:${lastCar(who) ? teamStyle(lastCar(who).team).color : 'var(--line-off)'}">
       <h2 class="dtitle">${esc(nm(who))} ${titles[who] ? '🏆'.repeat(titles[who]) : ''}</h2>${DATA.pilots.has(who) ? `<button class="btn-cmp" data-cmp="${esc(who)}|${esc((V.standings.find(d => d.who !== who) || {}).who ?? '')}">⇄ Сравнить</button>` : ''}</div>
     ${statTiles(st, tile('Титулы', titles[who] || 0, `идеальных гонок: ${st.perfect}`, true))}
     <h3>Карьера</h3>
@@ -1016,24 +1017,9 @@ function openPilot(who) {
     };
   }).filter(i => !i.empty))}
     ${!st.starts && seasonOf() ? emptyState('🏎', `В сезоне ${seasonOf().n} не выступал`, 'Выберите «Все сезоны» или другой сезон, чтобы увидеть результаты') : ''}
-    ${st.starts ? `<h3>Места по гонкам</h3><div class="chart-box small"><canvas id="dchart" role="img" aria-label="Места пилота по гонкам"></canvas></div>` : ''}
+    ${my.length ? pilotRaces(my) : ''}
     ${pens.length ? `<h3>Штрафы</h3><ul class="plain">${pens.map(r => `<li>${rlink(r.race)} ${esc(r.race.date)}: −${r.penalty} (финиш ${r.origPos} → ${r.pos})${r.penaltyNote ? ` — ${esc(r.penaltyNote)}` : ''}</li>`).join('')}</ul>` : ''}
   `);
-  if (st.starts) {
-    const cr = my;
-    dcharts.push(new Chart(document.getElementById('dchart'), {
-      type: 'line',
-      data: { labels: cr.map(r => raceName(r.race)), datasets: [{ data: cr.map(r => r.pos), borderColor: css('--s1'), backgroundColor: cr.map(r => r.race.counted ? css('--s1') : css('--surface')), pointRadius: 4, pointBorderColor: cr.map(r => r.race.counted ? css('--surface') : css('--s1')), pointBorderWidth: 2, borderWidth: 2 }] },
-      options: {
-        maintainAspectRatio: false, animation: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { title: i => i[0].label, label: i => cr[i.dataIndex].race.counted ? ` P${i.parsed.y} · +${cr[i.dataIndex].pts} очк.` : ` P${i.parsed.y} · вне зачёта` } } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: css('--text-2'), maxRotation: 0, autoSkip: true, autoSkipPadding: 16, callback(v) { return this.getLabelForValue(v).split(' · ')[0]; } } },
-          y: { reverse: true, min: 1, grid: { color: css('--grid') }, border: { display: false }, ticks: { color: css('--muted'), precision: 0 } }
-        },
-      },
-    }));
-  }
 }
 
 // ---------- сравнение пилотов ----------
@@ -1128,19 +1114,37 @@ function openHelp() {
   `);
 }
 
+// Результаты гонок пилота: хронологически, с временем и лучшим кругом, если они записаны
+function pilotRaces(rows) {
+  const hasTime = rows.some(r => r.time != null || r.dnfReason), hasLap = rows.some(r => r.lap != null);
+  return `<h3>Результаты</h3><div class="scroll"><table class="data">
+    <thead><tr><th data-best="none">Гонка</th><th class="c" data-best="none">Место</th>${hasTime ? '<th class="r" data-best="none">Время</th>' : ''}${hasLap ? '<th class="r opt" data-best="none">Лучший круг</th>' : ''}<th class="r" data-best="none">Очки</th><th class="r opt">Лидирование</th></tr></thead>
+    <tbody>${rows.map(r => `<tr class="${r.race.counted ? '' : 'off'}" data-at="${esc(r.race.date)}">
+      <td data-v="${r.race.id}">${rlink(r.race)}<small class="maker-sub">${esc(r.race.date)}${r.race.counted ? '' : ' · вне зачёта'}</small></td>
+      <td class="c" data-v="${r.pos}">${r.perfect ? `<i class="mk perfect static" ${tipAttr(['Идеальная гонка', 'Победа и наибольшее лидирование'])}>✦</i> ` : ''}<span class="cell sm ${posCls(r.pos)}">${r.pos}</span>${penMark(r)}</td>
+      ${hasTime ? `<td class="r" data-v="${timeSort(r)}">${timeCell(r)}${hasLap && r.lap != null ? `<small class="sm-only">${lapCell(r)}</small>` : ''}</td>` : ''}${hasLap ? `<td class="r opt" data-v="${r.lap ?? ''}">${lapCell(r)}</td>` : ''}
+      <td class="r pts" data-v="${r.pts}">${r.race.counted ? r.pts : '<span class="muted">0</span>'}${r.laps ? `<small class="sm-only">${lapsCell(r)}</small>` : ''}</td><td class="r opt" data-v="${r.laps}">${lapsCell(r)}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
 // ---------- протокол гонки ----------
+// Ячейки результата гонки (протокол и окно пилота): время/отставание/круги/сход, лучший круг, лидирование
+function timeCell(r) {
+  const s = r.race;
+  if (r.dnf) return `<span class="dnf-t">${esc(r.dnfReason || 'сход')}</span>`;
+  if (r.time == null) return s.rows.some(x => x.time != null) ? '<span class="muted">—</span>' : ''; // только причины сходов — без прочерков
+  if (r.lapsDown) return `<span class="gap">+${r.lapsDown} ${plural(r.lapsDown, 'круг', 'круга', 'кругов')}</span>`;
+  return r.time === s.leaderTime ? fmtTime(r.time) : `<span class="gap">+${fmtTime(r.time - s.leaderTime)}</span>`;
+}
+const timeSort = r => r.dnf ? 1e9 : r.time == null ? '' : (r.lapsDown || 0) * 1e6 + r.time;
+const lapCell = r => r.lap == null ? '<span class="muted">—</span>' : r.fastest ? `<span class="fl" ${tipAttr(['Быстрейший круг гонки'])}>⏱ ${fmtTime(r.lap)}</span>` : fmtTime(r.lap);
+const lapsCell = r => r.laps ? `${r.race.lapsKnown ? `${r.laps} кр. · ` : ''}+${r.bonus}${r.most ? ' ★' : ''}` : '<span class="muted">—</span>';
+const penMark = r => r.penalty ? ` <i class="mk pen static" ${tipAttr([`Штраф −${r.penalty}`, r.penaltyNote, `финиш ${r.origPos} → ${r.pos}`])}>−${r.penalty}</i>` : '';
+
 function openRace(id) {
   const s = DATA.list.find(x => x.id === id);
   // время: у победителя — полное, у остальных — отставание от него или круги; сход — с причиной
   const hasTime = s.rows.some(r => r.time != null || r.dnfReason), hasLap = s.fastestLap != null;
-  const anyTime = s.rows.some(r => r.time != null); // только причины сходов — у финишировавших пусто, без прочерков
-  const timeCell = r => r.dnf ? `<span class="dnf-t">${esc(r.dnfReason || 'сход')}</span>`
-    : r.time == null ? (anyTime ? '<span class="muted">—</span>' : '')
-    : r.lapsDown ? `<span class="gap">+${r.lapsDown} ${plural(r.lapsDown, 'круг', 'круга', 'кругов')}</span>`
-    : r.time === s.leaderTime ? fmtTime(r.time) : `<span class="gap">+${fmtTime(r.time - s.leaderTime)}</span>`;
-  const timeSort = r => r.dnf ? 1e9 : r.time == null ? '' : (r.lapsDown || 0) * 1e6 + r.time;
-  const lapCell = r => r.lap == null ? '<span class="muted">—</span>' : r.fastest ? `<span class="fl" ${tipAttr(['Быстрейший круг гонки'])}>⏱ ${fmtTime(r.lap)}</span>` : fmtTime(r.lap);
-  const lapsCell = r => r.laps ? `${r.laps} кр. · +${r.bonus}${r.most ? ' ★' : ''}` : '<span class="muted">—</span>';
   showDialog(`
     <div class="dhead"><p class="eyebrow">Протокол · ${esc(s.date)}</p><h2 class="dtitle">${esc(trackName(s.track))}</h2></div>
     ${s.counted ? '' : '<div class="badges"><span class="badge off">вне зачёта</span></div>'}
@@ -1148,7 +1152,7 @@ function openRace(id) {
     ${s.penalties.map(p => `<p class="note">⚖ ${esc(penText(p))}</p>`).join('')}
     <div class="scroll" style="margin-top:12px"><table class="data">
       <thead><tr><th class="c" data-best="none">Место</th><th data-best="none">Пилот</th><th class="opt" data-best="none">Машина</th><th class="c" data-best="none">Марка</th>${hasTime ? '<th class="r" data-best="none">Время</th>' : ''}${hasLap ? '<th class="r opt" data-best="none">Лучший круг</th>' : ''}<th class="r" data-best="none">Очки</th><th class="r opt">Лидирование</th></tr></thead>
-      <tbody>${s.rows.map(r => `<tr><td class="c" data-v="${r.pos}"><span class="cell sm ${posCls(r.pos)}">${r.pos}</span>${r.penalty ? ` <i class="mk pen static" ${tipAttr([`Штраф −${r.penalty}`, r.penaltyNote, `финиш ${r.origPos} → ${r.pos}`])}>−${r.penalty}</i>` : ''}</td><td data-v="${esc(nm(r.who))}">${r.perfect ? `<i class="mk perfect static" ${tipAttr(['Идеальная гонка', 'Победа и наибольшее лидирование'])}>✦</i> ` : ''}${plink(r.who)}</td><td class="opt" data-v="${esc(r.ch?.num ?? '')}">${carTag(r.ch)}</td><td class="c" data-v="${esc(r.ch?.maker ?? '')}">${r.ch ? makerLogo(r.ch.maker) : '<span class="muted">—</span>'}</td>
+      <tbody>${s.rows.map(r => `<tr><td class="c" data-v="${r.pos}"><span class="cell sm ${posCls(r.pos)}">${r.pos}</span>${penMark(r)}</td><td data-v="${esc(nm(r.who))}">${r.perfect ? `<i class="mk perfect static" ${tipAttr(['Идеальная гонка', 'Победа и наибольшее лидирование'])}>✦</i> ` : ''}${plink(r.who)}</td><td class="opt" data-v="${esc(r.ch?.num ?? '')}">${carTag(r.ch)}</td><td class="c" data-v="${esc(r.ch?.maker ?? '')}">${r.ch ? makerLogo(r.ch.maker) : '<span class="muted">—</span>'}</td>
         ${hasTime ? `<td class="r" data-v="${timeSort(r)}">${timeCell(r)}${hasLap && r.lap != null ? `<small class="sm-only">${lapCell(r)}</small>` : ''}</td>` : ''}${hasLap ? `<td class="r opt" data-v="${r.lap ?? ''}">${lapCell(r)}</td>` : ''}<td class="r pts">${s.counted ? r.pts : '<span class="muted">0</span>'}${r.laps ? `<small class="sm-only">${lapsCell(r)}</small>` : ''}</td><td class="r opt" data-v="${r.laps}">${lapsCell(r)}</td></tr>`).join('')}</tbody>
     </table></div>
   `);
