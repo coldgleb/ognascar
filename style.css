@@ -30,7 +30,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, sans-serif; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 16px 64px; }
 h1, h2, .num { font-family: "Barlow Condensed", Inter, sans-serif; }
 header { padding: 40px 0 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: end; justify-content: space-between; }
 header h1 { margin: 0; font-size: clamp(40px, 7vw, 64px); line-height: .95; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
@@ -295,3 +295,31 @@ tr.off td, td.off { opacity: .6; }
 td.c, th.c { text-align: center; }
 .legend-row > span { display: inline-flex; align-items: center; gap: 4px; }
 .legend-row .cell { margin-right: 0; }
+
+/* рекорды */
+/* карточки тянутся и закрывают строку; длинный список в широкой карточке раскладывается в колонки */
+.lbgrid { display: flex; flex-wrap: wrap; gap: 12px; }
+.lb { flex: 1 1 220px; min-width: 0; }
+.lb.wide { flex: 2 1 452px; }
+.lb ol { columns: 2 190px; column-gap: 24px; }
+.lb li { break-inside: avoid; }
+.lb { padding: 14px 14px 10px; }
+.lb-head { display: flex; align-items: center; gap: 8px; font: 700 18px/1.1 "Barlow Condensed", sans-serif; text-transform: uppercase; margin-bottom: 8px; }
+.lb-icon { font-size: 16px; width: 22px; text-align: center; }
+.lb ol { list-style: none; margin: 0; padding: 0; }
+.lb li { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 6px; padding: 3px 0; font-size: 14px; border-bottom: 1px solid var(--grid); }
+.lb li:last-child { border-bottom: 0; }
+.lb-rank { font: 700 15px "Barlow Condensed", sans-serif; color: var(--muted); }
+.lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb li b { font: 700 17px "Barlow Condensed", sans-serif; }
+.lb details summary { cursor: pointer; font-size: 12px; color: var(--muted); padding-top: 4px; }
+.lb-empty { margin: 4px 0; font-size: 13px; }
+
+/* гонки по сезонам */
+.season-group + .season-group { margin-top: 28px; }
+.season-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 0 0 8px 12px; margin-bottom: 12px; border-left: 4px solid var(--accent); border-bottom: 1px solid var(--border); }
+.sh-title { font: 700 22px/1.1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.sh-meta { font-size: 13px; color: var(--text-2); }
+.icon-btn { width: 34px; height: 32px; padding: 0; font-size: 16px; line-height: 1; }
+h2 + .season-group { margin-top: 20px; }
+.tc-stats span.gold b { color: var(--gold); }

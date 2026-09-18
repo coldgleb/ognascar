@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>try { var t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,7 +18,7 @@
       <h1>NASCAR <span>15</span><br>Чемпионат</h1>
       <p id="subtitle">Загружаю данные…</p>
     </div>
-    <div class="toolbar"><span id="updated"></span><button id="reload">Обновить</button></div>
+    <div class="toolbar"><span id="updated"></span><button id="theme" class="icon-btn"></button><button id="reload">Обновить</button></div>
   </header>
   <div class="bars">
   <nav class="main-nav" id="nav"><button data-tab="seasons">Сезоны</button><button data-tab="pilots">Пилоты</button><button data-tab="teams">Команды</button><button data-tab="makers">Производители</button><button data-tab="charters">Чартеры</button></nav>
