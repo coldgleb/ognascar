@@ -487,3 +487,31 @@ section[id^="s-"] { scroll-margin-top: calc(var(--bars-h, 100px) + 12px); }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 50; padding: 8px 14px; border-radius: 8px; background: var(--text); color: var(--bg); font-weight: 600; text-decoration: none; }
 .skip:focus { top: 12px; }
 main:focus { outline: none; }
+
+/* время и быстрейший круг */
+.gap { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fl { color: var(--perfect); font-weight: 700; font-variant-numeric: tabular-nums; }
+.dnf-t { color: var(--s8); font-weight: 600; }
+
+/* окна без горизонтальной прокрутки: таблицы ужимаются и переносят текст */
+dialog#dlg { overflow-x: hidden; }
+#dlg-body .scroll { overflow-x: visible; }
+#dlg-body table { width: 100%; }
+#dlg-body th, #dlg-body td { white-space: normal; }
+#dlg-body .car, #dlg-body .lnk.tl, #dlg-body .cell { white-space: nowrap; }
+.maker-sub { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.tl-row { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); }
+@media (max-width: 640px) {
+  #dlg-body .opt { display: none; }
+  #dlg-body th, #dlg-body td { padding: 7px 4px; font-size: 13px; }
+  #dlg-body th { font-size: 10px; letter-spacing: .02em; }
+  #dlg-body .pts { font-size: 17px; }
+}
+.sm-only { display: none; }
+@media (max-width: 640px) { #dlg-body .sm-only { display: block; font: 400 11px/1.3 Inter, sans-serif; color: var(--text-2); margin-top: 2px; } }
+
+/* логотип марки */
+.mlogo { display: inline-block; width: 24px; height: 24px; vertical-align: middle; background: currentColor; -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
+.mlogo { width: 34px; height: 22px; }
+#dlg-body td.opt { white-space: nowrap; }
+@media (max-width: 640px) { #dlg-body .mlogo { width: 24px; height: 16px; } #dlg-body th, #dlg-body td { padding-left: 3px; padding-right: 3px; } #dlg-body .lnk { overflow-wrap: anywhere; } }
