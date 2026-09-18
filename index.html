@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Чемпионат NASCAR 15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="checker"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>NASCAR <span>15</span><br>Чемпионат</h1>
+      <p id="subtitle">Загружаю данные…</p>
+    </div>
+    <div class="toolbar"><span id="updated"></span><button id="reload">Обновить</button></div>
+  </header>
+  <div class="bars">
+  <nav class="main-nav" id="nav"><button data-tab="seasons">Сезоны</button><button data-tab="pilots">Пилоты</button><button data-tab="teams">Команды</button><button data-tab="makers">Производители</button><button data-tab="charters">Чартеры</button></nav>
+  <nav class="seasonbar" id="seasonbar"></nav>
+  </div>
+  <div id="app"><div class="status">Загружаю таблицу…</div></div>
+  <footer>(с) OG Chat, 2026</footer>
+</div>
+<dialog id="dlg"><form method="dialog"><button class="dlg-close" aria-label="Закрыть">✕</button></form><div id="dlg-body"></div></dialog>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
