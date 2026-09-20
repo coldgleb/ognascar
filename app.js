@@ -103,7 +103,7 @@ function parse({ results, points, charters, drivers, stages, penalties }) {
   const races = new Map();
   const mk = r => ({ id: r.id, date: r.date, no: +r.no || 0, track: r.track, counted: isTrue(r.counted), note: '', penalties: [], rows: [] });
   for (const r of sheetRows(stages, { ...RACE, 'note?': /^примеч/ }, 'Этапы')) if (r.track) races.set(r.id, { ...mk(r), note: r.note });
-  for (const r of sheetRows(results, { ...RACE, pos: /^место/, dnf: /^dnf/, who: /^гонщ/, laps: /^лидир/, 'time?': /^общее время|^время/, 'lap?': /^лучш/ }, 'Результаты')) {
+  for (const r of sheetRows(results, { ...RACE, pos: /^место/, 'dnf?': /^dnf/, who: /^гонщ/, laps: /^лидир/, 'time?': /^общее время|^время/, 'lap?': /^лучш/ }, 'Результаты')) {
     const who = resolve(r.who);
     if (!who || !r.pos) continue;
     if (!races.has(r.id)) races.set(r.id, mk(r));
