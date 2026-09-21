@@ -16,6 +16,38 @@ const TEAM_STYLE = {
   'Richard Petty Motorsports': ['Petty', '#35b6ff'],
 };
 const teamStyle = name => { const [short, color] = TEAM_STYLE[name] || [name.replace(/ (Racing|Motorsports)$/, ''), '#9aa3b5']; return { short, color }; };
+// Эмблемы команд (стилизация по логотипам 2015 года): аббревиатура на цвете команды с гоночной полосой
+const TEAM_MONO = {
+  'Hendrick Motorsports': 'HMS', 'Joe Gibbs Racing': 'JGR', 'Team Penske': 'TP', 'Richard Childress Racing': 'RCR',
+  'Stewart-Haas Racing': 'SHR', 'Roush Fenway Racing': 'RFR', 'Chip Ganassi Racing': 'CGR', 'Richard Petty Motorsports': 'RPM',
+  'JR Motorsports': 'JRM', 'Front Row Motorsports': 'FRM', 'Furniture Row': 'FRR', 'Michael Waltrip Racing': 'MWR',
+  'Wood Brothers Racing': 'WB', 'BK Racing': 'BK', 'Germain Racing': 'GR', 'Go Green Racing': 'GGR', 'HScott Motorsports': 'HSM',
+  'JTG Daugherty Racing': 'JTG', 'Leavine Family': 'LFR', 'Philipp Parsons Racing': 'PPR',
+};
+const lightHex = hex => { const n = parseInt(hex.slice(1), 16), [r, g, b] = [n >> 16, n >> 8 & 255, n & 255].map(v => (v /= 255) <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * r + .7152 * g + .0722 * b > .35; };
+// Файлы логотипов в папке logos/. Нет файла — показывается эмблема с буквами (подменяется сама при загрузке).
+// Чтобы добавить логотип вручную, положите файл с указанным здесь именем в logos/.
+const TEAM_FILE = {
+  'Hendrick Motorsports': 'hms.svg', 'Joe Gibbs Racing': 'jgr.png', 'Team Penske': 'penske.svg', 'Richard Childress Racing': 'rcr.jpg',
+  'Stewart-Haas Racing': 'shr.png', 'Roush Fenway Racing': 'rfr.png', 'Chip Ganassi Racing': 'cgr.png', 'Richard Petty Motorsports': 'rpm.png',
+  'JR Motorsports': 'jrm.png', 'Front Row Motorsports': 'frm.png', 'Furniture Row': 'frr.png', 'Michael Waltrip Racing': 'mwr.png',
+  'Wood Brothers Racing': 'wbr.png', 'BK Racing': 'bk.png', 'Germain Racing': 'germain.png', 'Go Green Racing': 'ggr.png',
+  'HScott Motorsports': 'hscott.png', 'JTG Daugherty Racing': 'jtg.png', 'Leavine Family': 'lfr.jpg', 'Philipp Parsons Racing': 'ppr.jpg',
+};
+// тёмные логотипы: в тёмной теме получают светлую подложку, иначе теряются на фоне
+const DARK_INK = new Set(['jgr.png', 'penske.svg', 'germain.png', 'mwr.png', 'frm.png']);
+const teamLogo = team => {
+  const file = TEAM_FILE[team];
+  return `<span class="tl${file ? '' : ' noimg'}" title="${esc(team)}">${file ? `<img class="tl-img${DARK_INK.has(file) ? ' dark-ink' : ''}" src="logos/${file}" alt="${esc(team)}" loading="lazy" onerror="this.parentNode.classList.add('noimg')">` : ''}${teamBadge(team)}</span>`;
+};
+const teamBadge = team => {
+  const { color } = teamStyle(team);
+  const mono = TEAM_MONO[team] || team.split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  const fg = lightHex(color) ? '#141414' : '#ffffff';
+  return `<svg class="tlogo" viewBox="0 0 40 40" role="img" aria-label="${esc(team)}"><title>${esc(team)}</title>` +
+    `<rect width="40" height="40" rx="9" fill="${color}"/><path d="M27 0h7L16 40H9z" fill="${fg}" opacity=".14"/>` +
+    `<text x="20" y="${mono.length > 2 ? 25 : 26.5}" text-anchor="middle" font-family="'Fira Sans Extra Condensed', Inter, sans-serif" font-weight="800" font-style="italic" font-size="${mono.length > 2 ? 14.5 : 18}" fill="${fg}">${mono}</text></svg>`;
+};
 const MAKER_VAR = { Ford: '--s1', Chevrolet: '--s4', Toyota: '--s8' }; // Ford синий, Chevrolet жёлтый, Toyota красный
 // Логотипы марок — Simple Icons (jsdelivr), окрашиваются маской в цвет марки
 const MAKER_ICON = { Ford: 'ford', Chevrolet: 'chevrolet', Toyota: 'toyota' };
@@ -481,7 +513,7 @@ function finderIndex() {
   const nums = [...new Set(DATA.entries.filter(e => e.driver).map(e => e.num))];
   return [
     ...[...pilots].map(p => { const e = lastCar(p); return { kind: 'Пилот', label: nm(p), sub: [nm(p) !== p && p, e && `#${e.num} ${teamStyle(e.team).short}`].filter(Boolean).join(' · '), key: { pilot: p }, text: norm(`${nm(p)} ${p}`), color: e ? teamStyle(e.team).color : '' }; }),
-    ...[...DATA.teams.values()].filter(t => t.entries.some(e => e.driver)).map(t => ({ kind: 'Команда', label: t.name, sub: '', logo: [...t.makers].map(makerLogo).join(' '), key: { team: t.name }, text: norm(`${t.name} ${t.short}`), color: t.color })),
+    ...[...DATA.teams.values()].filter(t => t.entries.some(e => e.driver)).map(t => ({ kind: 'Команда', label: t.name, ico: teamLogo(t.name), sub: '', logo: [...t.makers].map(makerLogo).join(' '), key: { team: t.name }, text: norm(`${t.name} ${t.short}`), color: t.color })),
     ...nums.map(n => { const e = DATA.entries.find(x => x.num === n && x.on[DATA.lastDate] && x.driver) || DATA.entries.find(x => x.num === n && x.driver); return { kind: 'Машина', label: `#${n}`, sub: `${teamStyle(e.team).short} · ${nm(e.driver)}`, key: { car: n }, text: norm(`${n} ${e.team}`), color: teamStyle(e.team).color }; }),
   ];
 }
@@ -494,7 +526,7 @@ function renderFinder() {
     : all.filter(i => i.kind === 'Пилот').sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   fItems = fItems.slice(0, 12);
   fSel = Math.min(fSel, Math.max(0, fItems.length - 1));
-  fl.innerHTML = fItems.map((i, k) => `<li role="option" id="f-${k}" aria-selected="${k === fSel}" data-k="${k}" style="--c:${i.color || 'var(--line-off)'}"><span class="f-kind">${i.kind}</span><span class="f-main"><b>${esc(i.label)}</b><span class="f-sub">${i.logo || ''}${esc(i.sub)}</span></span></li>`).join('')
+  fl.innerHTML = fItems.map((i, k) => `<li role="option" id="f-${k}" aria-selected="${k === fSel}" data-k="${k}" style="--c:${i.color || 'var(--line-off)'}"><span class="f-kind">${i.kind}</span><span class="f-main"><b>${i.ico || ''}${esc(i.label)}</b><span class="f-sub">${i.logo || ''}${esc(i.sub)}</span></span></li>`).join('')
     || '<li class="f-empty"><b>Ничего не нашлось</b><span>Попробуйте ник, имя из таблицы, команду или номер машины</span></li>';
   fq.setAttribute('aria-activedescendant', fItems.length ? `f-${fSel}` : '');
   fl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
@@ -817,7 +849,7 @@ function viewTeams() {
     <h2>Команды</h2>
     <div class="grid tgrid">${list.map(x => {
     const { t, rank, pts } = x, wb = winOrBest(x); return `<a href="#" class="card tc" data-team="${esc(t.name)}" style="--c:${t.color}">
-      <span class="tc-head"><span class="tc-rank${medal(rank)}">P${rank}</span><span class="tc-name">${esc(t.name)}</span><span class="tc-maker">${[...t.makers].map(makerLogo).join(' ')}</span></span>
+      <span class="tc-head"><span class="tc-rank${medal(rank)}">P${rank}</span>${teamLogo(t.name)}<span class="tc-name">${esc(t.name)}</span><span class="tc-maker">${[...t.makers].map(makerLogo).join(' ')}</span></span>
       <span class="tc-nums">${[...new Set(t.entries.filter(e => e.driver).map(e => e.num))].map(n => `<span class="car" style="--c:${t.color}">#${esc(n)}</span>`).join(' ')}</span>
       <span class="tc-pilots">${pilotsOf(t).map(p => `<span class="pchip${p.cur ? ' cur' : ' past'}" ${tipAttr([p.cur ? (season ? 'Выезжал в этом сезоне' : 'Выезжал в последнем сезоне') : (season ? 'В этом сезоне не выезжал' : 'В последнем сезоне не выезжал')])}>${esc(nm(p.w))}</span>`).join('')}</span>
       <span class="tc-stats"><span><b>${pts}</b>очки</span><span><b>${wb.num}</b>${wb.short}</span></span>
@@ -827,7 +859,7 @@ function viewTeams() {
   <section>
     <div class="card scroll"><table class="data sticky" data-move="Марка" data-after="Очки">
       <thead><tr><th data-best="none">#</th><th data-best="none">Команда</th><th data-best="none">Марка</th><th class="r" data-best="none">Очки</th><th class="r">Старты</th><th class="r">Победы</th><th class="r">Подиумы</th><th class="r" data-best="min">Ср. место</th><th class="r">Лидировал</th></tr></thead>
-      <tbody>${list.map(x => `<tr><td class="pos${medal(x.rank)}" data-v="${x.rank}">${x.rank}</td><td data-v="${esc(x.team)}">${tlink(x.team, x.team)}</td><td data-v="${esc([...x.t.makers].join(', '))}">${[...x.t.makers].map(makerLogo).join(' ')}</td><td class="r pts">${x.pts}</td><td class="r">${x.starts}</td><td class="r">${zero(x.wins)}</td><td class="r">${zero(x.podiums)}</td><td class="r" data-v="${x.avg ?? ''}">${x.avg == null ? '—' : x.avg.toFixed(1)}</td><td class="r">${x.led}</td></tr>`).join('')}</tbody>
+      <tbody>${list.map(x => `<tr><td class="pos${medal(x.rank)}" data-v="${x.rank}">${x.rank}</td><td data-v="${esc(x.team)}"><span class="tname">${teamLogo(x.team)}${tlink(x.team, x.team)}</span></td><td data-v="${esc([...x.t.makers].join(', '))}">${[...x.t.makers].map(makerLogo).join(' ')}</td><td class="r pts">${x.pts}</td><td class="r">${x.starts}</td><td class="r">${zero(x.wins)}</td><td class="r">${zero(x.podiums)}</td><td class="r" data-v="${x.avg ?? ''}">${x.avg == null ? '—' : x.avg.toFixed(1)}</td><td class="r">${x.led}</td></tr>`).join('')}</tbody>
     </table></div>
   </section>`;
 }
@@ -861,7 +893,7 @@ function openTeam(name) {
   const titles = seasons.filter(s => !s.live && s.champs.some(w => chOf(w, s.date)?.team === name));
   const cols = [...DATA.charterDates, ...(DATA.hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${t.color}"><p class="eyebrow">Команда · ${[...t.makers].map(makerLogo).join(' ')} · ${scopeLabel()}</p><h2 class="dtitle">${esc(t.name)}</h2></div>
+    <div class="dhead" style="--c:${t.color}"><p class="eyebrow">Команда · ${[...t.makers].map(makerLogo).join(' ')} · ${scopeLabel()}</p><h2 class="dtitle tl-title">${teamLogo(t.name)}${esc(t.name)}</h2></div>
     ${statTiles(statsOf(rows), tile('Титулы пилотов', titles.length, titles.map(s => `${s.champs.filter(w => chOf(w, s.date)?.team === name).map(w => esc(nm(w))).join(', ')} (${esc(s.date)})`).join(', ') || 'пока без титулов', true))}
     <h3>Пилоты</h3>
     <div class="chiprow">${[...nowSet].map(chip).join('')}</div>
@@ -982,7 +1014,7 @@ function openCar(num) {
   const champs = Object.fromEntries(seasons.filter(s => !s.live).map(s => [s.date, s.champs]));
   const cols = [...charterDates, ...(hasNext ? [NEXT] : [])];
   showDialog(`
-    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${makerLogo(curE.maker)} · ${curE.full ? 'фулл-тайм' : 'без чартера'} · ${scopeLabel()}</p><h2 class="dtitle"><span class="bignum">#${esc(num)}</span> ${tlink(curE.team, curE.team)}</h2></div>
+    <div class="dhead" style="--c:${teamStyle(curE.team).color}"><p class="eyebrow">Машина · ${makerLogo(curE.maker)} · ${curE.full ? 'фулл-тайм' : 'без чартера'} · ${scopeLabel()}</p><h2 class="dtitle tl-title"><span class="bignum">#${esc(num)}</span> ${teamLogo(curE.team)}${tlink(curE.team, curE.team)}</h2></div>
     ${statTiles(statsOf(rows))}
     <h3>По сезонам</h3>
     ${timeline(cols.map(c => {
