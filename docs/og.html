@@ -2,32 +2,106 @@
 <!-- Исходник картинки-превью для мессенджеров (og.png, 1200×630).
      Пересобрать: msedge --headless=new --screenshot=og.png --window-size=1200,630 --hide-scrollbars --virtual-time-budget=4000 file:///…/docs/og.html -->
 <html lang="ru">
+
 <head>
-<meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@600;800&family=Inter:wght@500&display=block" rel="stylesheet">
-<style>
-  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
-  body { background: #111110; color: #fff; font-family: Inter, sans-serif; position: relative; }
-  .checker { height: 26px; background: repeating-conic-gradient(#fff 0 25%, transparent 0 50%) 0 0 / 26px 26px; opacity: .9; }
-  .checker.bottom { position: absolute; left: 0; right: 0; bottom: 0; }
-  .wrap { padding: 70px 80px; }
-  h1 { margin: 110px 0 0; font: 800 90px/.95 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; letter-spacing: 1px; }
-  h1 span { color: #e34948; }
-  .ru { font: 800 150px/.9 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; letter-spacing: 1px; }
-  .sub { margin-top: 22px; font: 600 34px/1.2 "Fira Sans Extra Condensed", sans-serif; text-transform: uppercase; color: #c3c2b7; letter-spacing: .5px; }
-  .chips { margin-top: 34px; display: flex; gap: 14px; }
-  .chips span { padding: 10px 22px; border-radius: 999px; background: #232321; border: 2px solid #33332f; font-size: 26px; color: #fff; }
-  .stripe { position: absolute; right: 56px; top: 120px; width: 14px; height: 360px; background: linear-gradient(#e34948 0 33%, #eda100 33% 66%, #2a78d6 66%); border-radius: 7px; }
-</style>
+  <meta charset="utf-8">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@600;800&family=Inter:wght@500&display=block"
+    rel="stylesheet">
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+    }
+
+    body {
+      background: #111110;
+      color: #fff;
+      font-family: Inter, sans-serif;
+      position: relative;
+    }
+
+    .checker {
+      height: 26px;
+      background: repeating-conic-gradient(#fff 0 25%, transparent 0 50%) 0 0 / 26px 26px;
+      opacity: .9;
+    }
+
+    .checker.bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    .wrap {
+      padding: 70px 80px;
+    }
+
+    h1 {
+      margin: 110px 0 0;
+      font: 800 90px/.95 "Fira Sans Extra Condensed", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    h1 span {
+      color: #e34948;
+    }
+
+    .ru {
+      font: 800 150px/.9 "Fira Sans Extra Condensed", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .sub {
+      margin-top: 22px;
+      font: 600 34px/1.2 "Fira Sans Extra Condensed", sans-serif;
+      text-transform: uppercase;
+      color: #c3c2b7;
+      letter-spacing: .5px;
+    }
+
+    .chips {
+      margin-top: 34px;
+      display: flex;
+      gap: 14px;
+    }
+
+    .chips span {
+      padding: 10px 22px;
+      border-radius: 999px;
+      background: #232321;
+      border: 2px solid #33332f;
+      font-size: 26px;
+      color: #fff;
+    }
+
+    .stripe {
+      position: absolute;
+      right: 56px;
+      top: 120px;
+      width: 14px;
+      height: 360px;
+      background: linear-gradient(#e34948 0 33%, #eda100 33% 66%, #2a78d6 66%);
+      border-radius: 7px;
+    }
+  </style>
 </head>
+
 <body>
   <div class="checker"></div>
   <div class="stripe"></div>
   <div class="wrap">
-    <h1 style="white-space: nowrap">OG NASCAR <span>15</span> Чемпионат</h1>
+    <h1 style="white-space: nowrap">OG NASCAR Чемпионат</h1>
     <div class="sub">Результаты · зачёт · пилоты · команды · чартеры</div>
     <div class="chips"><span>🏆 Чемпионы</span><span>⏱ Протоколы</span><span>⇄ Сравнение</span></div>
   </div>
   <div class="checker bottom"></div>
 </body>
+
 </html>
