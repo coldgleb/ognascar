@@ -575,7 +575,7 @@ function showDialog(html) {
   makeFocusable(body);
   const title = body.querySelector('.dtitle');
   if (title) { title.id = 'dlg-title'; dlg.setAttribute('aria-labelledby', 'dlg-title'); } else dlg.removeAttribute('aria-labelledby');
-  document.title = title ? `${title.textContent.trim()} — OG NASCAR 15` : BASE_TITLE; // вкладка, закладки и «Поделиться» с названием окна
+  document.title = title ? `${title.textContent.trim()} — OG NASCAR ` : BASE_TITLE; // вкладка, закладки и «Поделиться» с названием окна
   backBtn.hidden = !backStack.length;
   if (!dlg.open) dlg.showModal();
   if (!toastEl.hidden) dlg.appendChild(toastEl); // уведомление — поверх окна, а не под затемнением
