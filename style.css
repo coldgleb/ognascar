@@ -548,7 +548,8 @@ dialog#dlg { overflow-x: hidden; }
 /* логотип команды: картинка на светлой подложке (тёмные логотипы видны и в тёмной теме); нет файла — эмблема с буквами */
 .tl { display: inline-flex; align-items: center; flex: none; }
 .tl-img { height: 28px; max-width: 84px; object-fit: contain; box-sizing: content-box; }
-:root[data-theme="dark"] .tl-img.dark-ink { background: #fff; border-radius: 6px; padding: 2px 5px; }
+/* в тёмной теме — светлая подложка у всех логотипов, в светлой — прозрачный фон */
+:root[data-theme="dark"] .tl-img { background: #fff; border-radius: 6px; padding: 2px 5px; }
 .tl .tlogo { display: none; }
 .tl.noimg .tl-img { display: none; }
 .tl.noimg .tlogo { display: inline-block; }

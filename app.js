@@ -25,20 +25,23 @@ const TEAM_MONO = {
   'JTG Daugherty Racing': 'JTG', 'Leavine Family': 'LFR', 'Philipp Parsons Racing': 'PPR',
 };
 const lightHex = hex => { const n = parseInt(hex.slice(1), 16), [r, g, b] = [n >> 16, n >> 8 & 255, n & 255].map(v => (v /= 255) <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * r + .7152 * g + .0722 * b > .35; };
-// Файлы логотипов в папке logos/. Нет файла — показывается эмблема с буквами (подменяется сама при загрузке).
-// Чтобы добавить логотип вручную, положите файл с указанным здесь именем в logos/.
-const TEAM_FILE = {
-  'Hendrick Motorsports': 'hms.svg', 'Joe Gibbs Racing': 'jgr.png', 'Team Penske': 'penske.svg', 'Richard Childress Racing': 'rcr.jpg',
-  'Stewart-Haas Racing': 'shr.png', 'Roush Fenway Racing': 'rfr.png', 'Chip Ganassi Racing': 'cgr.png', 'Richard Petty Motorsports': 'rpm.png',
-  'JR Motorsports': 'jrm.png', 'Front Row Motorsports': 'frm.png', 'Furniture Row': 'frr.png', 'Michael Waltrip Racing': 'mwr.png',
-  'Wood Brothers Racing': 'wbr.png', 'BK Racing': 'bk.png', 'Germain Racing': 'germain.png', 'Go Green Racing': 'ggr.png',
-  'HScott Motorsports': 'hscott.png', 'JTG Daugherty Racing': 'jtg.png', 'Leavine Family': 'lfr.jpg', 'Philipp Parsons Racing': 'ppr.jpg',
+// Логотипы — в папке logos/, имя файла = ключ команды: logos/<ключ>.svg или logos/<ключ>.png.
+// Сначала пробуется SVG, затем PNG; нет ни того, ни другого — эмблема с буквами.
+const TEAM_KEY = {
+  'Hendrick Motorsports': 'hms', 'Joe Gibbs Racing': 'jgr', 'Team Penske': 'penske', 'Richard Childress Racing': 'rcr',
+  'Stewart-Haas Racing': 'shr', 'Roush Fenway Racing': 'rfr', 'Chip Ganassi Racing': 'cgr', 'Richard Petty Motorsports': 'rpm',
+  'JR Motorsports': 'jrm', 'Front Row Motorsports': 'frm', 'Furniture Row': 'frr', 'Michael Waltrip Racing': 'mwr',
+  'Wood Brothers Racing': 'wbr', 'BK Racing': 'bk', 'Germain Racing': 'germain', 'Go Green Racing': 'ggr',
+  'HScott Motorsports': 'hscott', 'JTG Daugherty Racing': 'jtg', 'Leavine Family': 'lfr', 'Philipp Parsons Racing': 'ppr',
 };
-// тёмные логотипы: в тёмной теме получают светлую подложку, иначе теряются на фоне
-const DARK_INK = new Set(['jgr.png', 'penske.svg', 'germain.png', 'mwr.png', 'frm.png']);
+// SVG не нашёлся — пробуем PNG; не нашёлся и он — показываем буквы
+function teamImgFail(img) {
+  if (img.src.endsWith('.svg')) img.src = img.src.slice(0, -3) + 'png';
+  else img.parentNode.classList.add('noimg');
+}
 const teamLogo = team => {
-  const file = TEAM_FILE[team];
-  return `<span class="tl${file ? '' : ' noimg'}" title="${esc(team)}">${file ? `<img class="tl-img${DARK_INK.has(file) ? ' dark-ink' : ''}" src="logos/${file}" alt="${esc(team)}" loading="lazy" onerror="this.parentNode.classList.add('noimg')">` : ''}${teamBadge(team)}</span>`;
+  const key = TEAM_KEY[team];
+  return `<span class="tl${key ? '' : ' noimg'}" title="${esc(team)}">${key ? `<img class="tl-img" src="logos/${key}.svg" alt="${esc(team)}" loading="lazy" onerror="teamImgFail(this)">` : ''}${teamBadge(team)}</span>`;
 };
 const teamBadge = team => {
   const { color } = teamStyle(team);
