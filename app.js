@@ -321,7 +321,7 @@ const statTiles = (st, extra = '') => `<div class="tiles">${extra}
 const timeline = items => `<div class="tl-row">${items.map(i => `<div class="tl-item${i.sel ? ' sel' : ''}${i.empty ? ' empty' : ''}"${i.at && i.at !== NEXT ? ` data-at="${esc(i.at)}" data-go-season="${esc(i.at)}"${tipAttr([i.at === cur ? 'Выбранный сезон' : 'Показать этот сезон'])}` : ''} style="--c:${i.color || 'var(--line-off)'}">
   <span class="tl-top">${i.top}</span><span class="tl-main">${i.main}</span><span class="tl-sub">${i.sub || '&nbsp;'}</span></div>`).join('')}</div>`;
 
-let DATA, V, cur = null, tab = null, charts = [], dcharts = [], picked = new Map(), hideEmpty = true, pilotsMode = 'cards';
+let DATA, V, cur = null, tab = null, charts = [], dcharts = [], picked = new Map(), hideEmpty = true, pilotsMode = 'cards', chartersMode = 'grid';
 
 // ---------- таблицы: сортировка и максимум колонки ----------
 const cellVal = td => td ? (td.dataset.v ?? td.textContent.trim()) : '';
@@ -987,8 +987,26 @@ function viewCharters() {
     .filter(r => !hideEmpty || r.es.some(e => e.driver && cols.some(c => e.on[c])));
   const champs = Object.fromEntries(seasons.filter(s => !s.live).map(s => [s.date, s.champs]));
   const cls = c => cur === 'all' ? '' : c === cur ? 'sel' : 'dim';
+  const seg = `<div class="seg"><button data-mode="grid" aria-pressed="${chartersMode === 'grid'}">Матрица</button><button data-mode="brief" aria-pressed="${chartersMode === 'brief'}">Кратко</button></div>`;
+  if (chartersMode === 'brief') {
+    // выбранный сезон, иначе последний
+    const at = charterDates.includes(cur) ? cur : charterDates.at(-1);
+    // все номера команды; занят — если в этом сезоне на нём есть пилот
+    const teams = Map.groupBy([...entries].sort((a, b) => a.num - b.num), e => e.team);
+    return `<section class="first">
+    <div class="head-row"><h2>Чартеры · сезон ${(seasons.find(s => s.date === at)?.n) ?? esc(at)}</h2>${seg}</div>
+    <div class="card cbg">${[...teams].map(([team, es]) => {
+      const nums = [...new Set(es.map(e => e.num))];
+      const c = teamStyle(team).color;
+      return `<table class="cbt">${nums.map((n, i) => {
+        const who = es.find(e => e.num === n && e.on[at] && e.driver)?.driver;
+        return `<tr${who ? '' : ' class="off"'}>${i ? '' : `<th rowspan="${nums.length}" scope="rowgroup" style="--c:${c}">${tlink(team)}</th>`}<td><span class="car" style="--c:${c}" data-car="${esc(n)}">#${esc(n)}</span></td><td>${who ? plink(who) : '<span class="muted">свободен</span>'}</td></tr>`;
+      }).join('')}</table>`;
+    }).join('')}</div>
+  </section>`;
+  }
   return `<section class="first">
-    <h2>Чартеры</h2>
+    <div class="head-row"><h2>Чартеры</h2>${seg}</div>
     <div class="head-row"><label class="check"><input type="checkbox" id="hide-empty" ${hideEmpty ? 'checked' : ''}> Скрыть номера без пилотов</label><span class="legend-row" style="margin:0 0 12px"><span><i class="ftb" title="Фулл-тайм: чартер выдан">FT</i> фулл-тайм — на машину выдан чартер</span></span></div>
     <div class="card scroll"><table class="cm">
       <thead><tr><th>№</th>${cols.map(c => `<th class="${cls(c)}">${c === NEXT ? 'След. сезон<small>план</small>' : `${esc(c)}<small>сезон ${(seasons.find(s => s.date === c)?.n) ?? '—'}</small>`}</th>`).join('')}</tr></thead>
@@ -1006,7 +1024,10 @@ function viewCharters() {
     </table></div>
   </section>`;
 }
-after.charters = () => document.getElementById('hide-empty').addEventListener('change', e => { hideEmpty = e.target.checked; renderMain(); });
+after.charters = () => {
+  document.querySelectorAll('.seg [data-mode]').forEach(b => b.addEventListener('click', () => { chartersMode = b.dataset.mode; renderMain(); }));
+  document.getElementById('hide-empty')?.addEventListener('change', e => { hideEmpty = e.target.checked; renderMain(); });
+};
 
 function openCar(num) {
   const { seasons, rank, charterDates, hasNext } = DATA;
