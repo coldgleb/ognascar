@@ -250,11 +250,12 @@ function build(P) {
   const { list, entries } = P;
   const by = new Map();
   for (const s of list) by.has(s.date) ? by.get(s.date).push(s) : by.set(s.date, [s]);
+  for (const d of P.charterDates) if (!by.has(d)) by.set(d, []); // сезон из чартеров, гонок ещё нет
   const today = new Date(), todayKey = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}`;
-  const seasons = [...by].map(([date, stages], i) => ({ key: date, n: i + 1, date, ...summarize(stages) }));
+  const seasons = [...by].sort(([a], [b]) => dateKey(a) - dateKey(b)).map(([date, stages], i) => ({ key: date, n: i + 1, date, ...summarize(stages) }));
   const titles = {}, rank = {};
   for (const s of seasons) {
-    s.live = s.date === todayKey; // сегодняшний сезон может быть ещё не доигран
+    s.live = s.date === todayKey || !s.list.length; // сегодняшний или ещё не начатый сезон — не доигран
     s.champ = s.standings[0];
     s.champs = s.standings.filter(d => d.rank === 1).map(d => d.who);
     if (!s.live) for (const w of s.champs) titles[w] = (titles[w] || 0) + 1;
@@ -447,7 +448,7 @@ function go(patch) {
 function route() {
   if (!DATA) return;
   const h = readHash();
-  const season = h.season === 'all' || DATA.seasons.some(s => s.key === h.season) ? h.season : DATA.seasons.at(-1).key;
+  const season = h.season === 'all' || DATA.seasons.some(s => s.key === h.season) ? h.season : (DATA.seasons.findLast(s => s.list.length) || DATA.seasons.at(-1)).key;
   if (h.tab !== tab || season !== cur) { tab = h.tab; cur = season; renderSeasonBar(); renderMain(); }
   if (h.pilot && (DATA.pilots.has(h.pilot) || DATA.entries.some(e => e.driver === h.pilot))) openPilot(h.pilot);
   else if (h.team && DATA.teams.has(h.team)) openTeam(h.team);
@@ -640,6 +641,7 @@ function viewSeasons() {
   const { seasons, titles } = DATA;
   const season = seasonOf(), isAll = !season;
   const { list, counted, standings: st } = V;
+  if (season && !list.length) return `<section class="first">${emptyState('🏁', `Сезон ${season.n} ещё не начался`, 'Гонок пока нет — состав заявок на вкладке «Чартеры»')}</section>`;
   const tally = Object.entries(titles).sort((a, b) => b[1] - a[1]);
   const carDate = isAll ? DATA.lastDate : season.date;
   const leader = st[0], second = st.find(d => d.rank > 1);
@@ -1000,7 +1002,7 @@ function viewCharters() {
       const c = teamStyle(team).color;
       return `<table class="cbt">${nums.map((n, i) => {
         const who = es.find(e => e.num === n && e.on[at] && e.driver)?.driver;
-        return `<tr${who ? '' : ' class="off"'}>${i ? '' : `<th rowspan="${nums.length}" scope="rowgroup" style="--c:${c}">${tlink(team)}</th>`}<td><span class="car" style="--c:${c}" data-car="${esc(n)}">#${esc(n)}</span></td><td>${who ? plink(who) : '<span class="muted">свободен</span>'}</td></tr>`;
+        return `<tr>${i ? '' : `<th rowspan="${nums.length}" scope="rowgroup" style="--c:${c}">${tlink(team)}</th>`}<td><span class="car" style="--c:${c}" data-car="${esc(n)}">#${esc(n)}</span></td><td>${who ? plink(who) : '<span class="muted">свободен</span>'}</td></tr>`;
       }).join('')}</table>`;
     }).join('')}</div>
   </section>`;
